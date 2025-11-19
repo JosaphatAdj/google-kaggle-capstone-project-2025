@@ -1,0 +1,64 @@
+# 🔐 SECRETS & CONFIGURATIONS SENSIBLES
+*.env
+config/secrets.yaml
+config/api_keys.json
+keys/
+certificates/
+*.pem
+*.key
+*.crt
+
+# 🗄️ BASE DE DONNÉES & VECTOR STORE
+chroma_db/
+rag/vector_db/chroma_db/
+rag/vector_db/embeddings_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# 📝 LOGS
+logs/
+*.log
+agent_logs/
+system_logs/
+
+# 💾 DONNÉES TEMPORAIRES & CACHE
+data/
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+zzz/
+
+# 🔧 ENVIRONNEMENTS VIRTUELS & IDE
+venv/
+env/
+.venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 📦 PAQUETS & INSTALLATIONS
+node_modules/
+build/
+dist/
+*.egg-info/
+.installed.cfg
+
+# 🧪 TESTS & COUVERTURE
+.coverage
+htmlcov/
+.pytest_cache/
+test_results/
+
+# 🐳 DOCKER
+docker-compose.override.yml
+.dockerignore
+
+# 📊 MÉTRIQUES & BACKUPS
+backups/
+metrics/export/
