@@ -1,0 +1,35 @@
+{
+    "interaction_patterns": {
+        "support_technical": {
+            "faq_to_technical": "Problème complexe détecté → transfert",
+            "sentiment_escalation": "Sentiment négatif → déclenche escalation",
+            "bug_creation": "Création ticket bug → R&D"
+        },
+        "support_marketing": {
+            "customer_feedback": "Feedback client → Marketing",
+            "educational_content": "Scripts éducatifs → Support FAQ",
+            "product_updates": "Nouveautés produit → Agent FAQ"
+        },
+        "hr_it": {
+            "account_creation": "RH → créer compte → IT",
+            "incident_reporting": "IT → signaler incident → RH",
+            "onboarding_permissions": "Onboarding → assigner permissions"
+        },
+        "marketing_hr": {
+            "product_training": "Marketing → besoin formation produit",
+            "marketing_materials": "Support Employés → envoyer matériel visuel marketing"
+        },
+        "coo_coordination": {
+            "performance_alerts": "Recevoir alertes performance",
+            "workload_redistribution": "Redistribuer charge de travail",
+            "procedure_consistency": "Vérifier cohérence procédures",
+            "critical_escalation": "Gérer escalades critiques"
+        }
+    },
+    "a2a_rules": {
+        "mutual_authentication": "Authentification mutuelle obligatoire",
+        "permission_verification": "Permissions vérifiées automatiquement",
+        "mandatory_logging": "Journalisation obligatoire",
+        "standardized_responses": "Réponses standardisées"
+    }
+}

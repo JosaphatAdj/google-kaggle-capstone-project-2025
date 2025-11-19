@@ -1,0 +1,44 @@
+{
+    "categories": {
+        "hardware": {
+            "name": "Problème matériel",
+            "subcategories": [
+                "Capteurs",
+                "Moteurs",
+                "Batterie",
+                "Lames"
+            ],
+            "urgency_default": "medium"
+        },
+        "software": {
+            "name": "Problème logiciel",
+            "subcategories": [
+                "Firmware",
+                "App mobile",
+                "Mise à jour"
+            ],
+            "urgency_default": "medium"
+        },
+        "navigation": {
+            "name": "Navigation et cartographie",
+            "subcategories": [
+                "Retour station",
+                "Zones non nettoyées"
+            ],
+            "urgency_default": "low"
+        },
+        "performance": {
+            "name": "Performance insuffisante",
+            "subcategories": [
+                "Aspiration faible",
+                "Autonomie réduite"
+            ],
+            "urgency_default": "medium"
+        }
+    },
+    "urgency_levels": {
+        "urgent": "Robot inutilisable",
+        "normal": "Robot fonctionnel mais problème gênant",
+        "low": "Demande d'information"
+    }
+}

@@ -1,0 +1,56 @@
+{
+    "training_categories": {
+        "product_knowledge": {
+            "name": "Utilisation des robots RoboNest",
+            "target_roles": [
+                "Support Client",
+                "Support Technique",
+                "Marketing"
+            ],
+            "priority": "high"
+        },
+        "customer_communication": {
+            "name": "Communication client",
+            "target_roles": [
+                "Support Client",
+                "Marketing"
+            ],
+            "priority": "high"
+        },
+        "security": {
+            "name": "Sécurité interne & cybersécurité",
+            "target_roles": [
+                "All"
+            ],
+            "priority": "medium"
+        },
+        "internal_tools": {
+            "name": "Utilisation des outils internes",
+            "target_roles": [
+                "All"
+            ],
+            "priority": "medium"
+        },
+        "professional_development": {
+            "name": "Développement professionnel",
+            "target_roles": [
+                "All"
+            ],
+            "priority": "low"
+        }
+    },
+    "skill_assessment": {
+        "factors": [
+            "Rôle de l'employé",
+            "Niveau de compétence",
+            "Historique formations",
+            "Objectifs professionnels"
+        ],
+        "recommendation_flow": [
+            "Évaluation initiale",
+            "Suggestion de 3 modules obligatoires",
+            "Suivi automatique de progression",
+            "Proposition de modules avancés"
+        ]
+    }
+}

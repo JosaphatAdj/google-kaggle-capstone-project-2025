@@ -1,0 +1,39 @@
+{
+  "XR25": {
+    "autonomy_minutes": 120,
+    "battery": "Li-Ion 3400 mAh",
+    "suction_power_pa": 1800,
+    "dustbin_ml": 450,
+    "sensors": [
+      "Lidar LDX-1",
+      "Gyroscope IMU-3",
+      "Capteur poussière DCS-2",
+      "Capteurs anti-chute IRx4"
+    ],
+    "modes": [
+      "Auto",
+      "Spot",
+      "Bords",
+      "Silencieux"
+    ]
+  },
+  "XR30": {
+    "autonomy_minutes": 160,
+    "battery": "Li-Ion 4400 mAh",
+    "suction_power_pa": 2400,
+    "dustbin_ml": 520,
+    "sensors": [
+      "Lidar LDX-2",
+      "IMU-4",
+      "Caméra frontale",
+      "Capteurs anti-chute IRx6"
+    ],
+    "modes": [
+      "Auto",
+      "Spot",
+      "Bords",
+      "Turbo",
+      "Wet Clean"
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+    "request_types": {
+        "password_reset": "Réinitialisation de mot de passe",
+        "access_issues": "Problèmes d'accès aux outils internes",
+        "vpn_configuration": "Configuration VPN",
+        "account_issues": "Problèmes liés aux comptes utilisateur",
+        "software_installation": "Installation outils autorisés",
+        "technical_diagnosis": "Diagnostic technique simple",
+        "permission_management": "Gestion de permissions selon rôle"
+    },
+    "standard_procedures": {
+        "password_reset": [
+            "Vérifier identité",
+            "Générer lien de réinitialisation sécurisé",
+            "Forcer rotation mot de passe à la prochaine connexion",
+            "Vérifier double authentification active"
+        ],
+        "access_troubleshooting": [
+            "Identifier l'outil concerné",
+            "Vérifier crédentials + permissions",
+            "Tester un accès administrateur (lecture seule)",
+            "Forcer refresh / logout / regen token",
+            "Vérifier VPN ou réseau"
+        ]
+    },
+    "security_rules": {
+        "no_unauthorized_software": "Interdiction d'installer logiciels non approuvés",
+        "vpn_required": "VPN obligatoire hors bureau",
+        "device_encryption": "Chiffrement de tous les appareils",
+        "password_rotation": "Mots de passe renouvelés tous les 90 jours",
+        "two_factor_auth": "Authentification 2FA obligatoire"
+    }
+}

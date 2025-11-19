@@ -1,0 +1,55 @@
+{
+    "error_codes": {
+        "E01": {
+            "description": "Roues bloquées",
+            "causes": [
+                "Cheveux",
+                "obstacle"
+            ],
+            "resolution": "Nettoyer les roues, redémarrer",
+            "urgency": "medium",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E02": {
+            "description": "Blocage brosse principale",
+            "causes": [
+                "Fibres",
+                "tapis épais"
+            ],
+            "resolution": "Retirer la brosse et nettoyer",
+            "urgency": "low",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E03": {
+            "description": "Capteur anti-chute défectueux",
+            "causes": [
+                "Poussière",
+                "IR obstrué"
+            ],
+            "resolution": "Nettoyer capteurs, redémarrer",
+            "urgency": "high",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "L01": {
+            "description": "Lames bloquées",
+            "causes": [
+                "Herbes emmêlées"
+            ],
+            "resolution": "Retirer herbes, nettoyer",
+            "urgency": "medium",
+            "models": [
+                "LawnBot S",
+                "LawnBot Max"
+            ]
+        }
+    }
+}

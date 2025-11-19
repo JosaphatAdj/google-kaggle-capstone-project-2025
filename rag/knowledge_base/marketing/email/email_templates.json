@@ -1,0 +1,26 @@
+{
+    "email_types": {
+        "welcome": "Email de bienvenue",
+        "product_launch": "Lancement produit",
+        "promotion": "Email promotionnel",
+        "usage_tips": "Conseils d'utilisation",
+        "firmware_update": "Mise à jour firmware",
+        "maintenance_reminder": "Rappel d'entretien",
+        "reengagement": "Réactivation inactifs"
+    },
+    "subject_lines": [
+        "Votre XR30 peut faire bien plus que vous ne pensez",
+        "Nouveau firmware disponible",
+        "10 astuces pour un sol impeccable",
+        "Votre LawnBot vous remercie déjà"
+    ],
+    "template_structure": {
+        "subject": "Objet clair et court",
+        "preheader": "Texte d'aperçu",
+        "greeting": "Bonjour [Prénom],",
+        "benefit_block": "Bloc bénéfice principal",
+        "visual": "Image/Visuel",
+        "cta": "Call-to-action clair",
+        "ps": "PS optionnel"
+    }
+}

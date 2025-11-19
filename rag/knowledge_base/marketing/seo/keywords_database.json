@@ -1,0 +1,28 @@
+{
+    "generic_keywords": [
+        "robot aspirateur",
+        "robot tondeuse",
+        "entretien maison intelligent",
+        "robot de nettoyage",
+        "aspirateur autonome XR",
+        "tondeuse automatique LawnBot"
+    ],
+    "long_tail_keywords": [
+        "comment entretenir son robot aspirateur",
+        "robot tondeuse pour terrain en pente",
+        "XR30 vs XR25 différences",
+        "robot aspirateur qui se bloque",
+        "problème de cartographie robot"
+    ],
+    "article_structure": {
+        "h1": "Titre principal",
+        "introduction": "100-150 mots",
+        "sections": [
+            "Problème/Contexte",
+            "Fonctionnement du robot",
+            "Bénéfices utilisateur",
+            "FAQ/Problèmes courants"
+        ],
+        "conclusion": "Avec CTA"
+    }
+}

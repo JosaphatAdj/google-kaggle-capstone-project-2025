@@ -1,0 +1,34 @@
+{
+    "roles_permissions": {
+        "standard_employee": {
+            "access": "Ressources générales, procédures internes",
+            "restrictions": "Données sensibles limitées"
+        },
+        "support_client": {
+            "access": "Historique client, tickets support",
+            "restrictions": "Écriture limitée, pas d'accès RH"
+        },
+        "support_technical": {
+            "access": "Documentation technique complète, diagnostic avancé",
+            "restrictions": "Pas d'accès données employés"
+        },
+        "hr": {
+            "access": "Dossiers employés, gestion congés, documents administratifs",
+            "restrictions": "Accès limité aux données techniques"
+        },
+        "it_internal": {
+            "access": "Gestion comptes, outils administratifs, accès serveur",
+            "restrictions": "Audit obligatoire pour actions critiques"
+        },
+        "coo_agent": {
+            "access": "Accès global pour coordination",
+            "restrictions": "Journalisation complète obligatoire"
+        }
+    },
+    "access_rules": {
+        "least_privilege": "Accès minimum nécessaire",
+        "review_frequency": "Revue tous les 90 jours",
+        "log_retention": "Journaux d'accès conservés 12 mois",
+        "two_factor": "Authentification à deux facteurs obligatoire"
+    }
+}
