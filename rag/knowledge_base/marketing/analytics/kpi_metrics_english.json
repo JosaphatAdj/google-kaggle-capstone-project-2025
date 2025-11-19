@@ -1,0 +1,16 @@
+{
+    "primary_kpis": {
+        "ctr": "Click-Through Rate",
+        "email_open_rate": "Email open rate",
+        "social_engagement": "Social media engagement",
+        "qualified_leads": "Number of qualified leads",
+        "product_page_conversion": "Product page conversion",
+        "customer_retention": "Customer retention",
+        "nps_csat": "NPS and CSAT"
+    },
+    "advanced_kpis": {
+        "cac": "Cost per acquisition",
+        "attribution_score": "Attribution score",
+        "ltv": "Customer Lifetime Value"
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "LawnBot_S": {
+        "max_area_m2": 600,
+        "autonomy_minutes": 90,
+        "sensors": [
+            "GPS-lite",
+            "Rain sensor"
+        ],
+        "blades": "3 rotary blades",
+        "max_slope_degrees": 25
+    },
+    "LawnBot_Max": {
+        "max_area_m2": 1500,
+        "autonomy_minutes": 130,
+        "sensors": [
+            "High precision GPS",
+            "Ultrasonic obstacle detection"
+        ],
+        "blades": "3 rotary blades",
+        "max_slope_degrees": 35
+    }
+}

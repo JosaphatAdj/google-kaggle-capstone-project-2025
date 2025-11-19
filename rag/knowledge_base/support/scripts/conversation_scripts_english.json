@@ -1,0 +1,7 @@
+{
+    "opening": "Hello, thank you for contacting us! I understand your robot isn't working as expected, I'll help you step by step.",
+    "reformulation": "If I understand correctly, your robot stops before finishing cleaning. Let's quickly try some checks together.",
+    "conclusion": "Perfect! Your robot should work normally. If the problem reappears, write to us, we're here for you.",
+    "ticket_transferred": "Your request requires additional expertise. I'm transferring this to our technical specialists, they'll get back to you very soon.",
+    "thank_you": "Thank you for your patience! We're doing our best to help you."
+}

@@ -1,0 +1,17 @@
+{
+    "email_types": {
+        "welcome": "Welcome email",
+        "product_launch": "Product launch",
+        "promotion": "Promotional email",
+        "usage_tips": "Usage tips",
+        "firmware_update": "Firmware update",
+        "maintenance_reminder": "Maintenance reminder",
+        "reengagement": "Re-engagement for inactive users"
+    },
+    "subject_lines": [
+        "Your XR30 can do much more than you think",
+        "New firmware available",
+        "10 tips for a spotless floor",
+        "Your LawnBot already thanks you"
+    ]
+}

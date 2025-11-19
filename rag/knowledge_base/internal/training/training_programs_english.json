@@ -1,0 +1,28 @@
+{
+    "training_categories": {
+        "product_knowledge": {
+            "name": "RoboNest robot usage",
+            "target_roles": [
+                "Customer Support",
+                "Technical Support",
+                "Marketing"
+            ],
+            "priority": "high"
+        },
+        "customer_communication": {
+            "name": "Customer communication",
+            "target_roles": [
+                "Customer Support",
+                "Marketing"
+            ],
+            "priority": "high"
+        },
+        "security": {
+            "name": "Internal security & cybersecurity",
+            "target_roles": [
+                "All"
+            ],
+            "priority": "medium"
+        }
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "error_codes": {
+        "E01": {
+            "description": "Wheels blocked",
+            "causes": [
+                "Hair",
+                "obstacle"
+            ],
+            "resolution": "Clean wheels, restart",
+            "urgency": "medium",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E02": {
+            "description": "Main brush blockage",
+            "causes": [
+                "Fibers",
+                "thick carpet"
+            ],
+            "resolution": "Remove and clean brush",
+            "urgency": "low",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E03": {
+            "description": "Anti-drop sensor defective",
+            "causes": [
+                "Dust",
+                "obstructed IR"
+            ],
+            "resolution": "Clean sensors, restart",
+            "urgency": "high",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        }
+    }
+}

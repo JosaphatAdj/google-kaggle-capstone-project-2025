@@ -1,0 +1,19 @@
+{
+    "request_types": {
+        "password_reset": "Password reset",
+        "access_issues": "Internal tool access problems",
+        "vpn_configuration": "VPN configuration",
+        "account_issues": "User account issues",
+        "software_installation": "Authorized software installation",
+        "technical_diagnosis": "Simple technical diagnosis",
+        "permission_management": "Role-based permission management"
+    },
+    "standard_procedures": {
+        "password_reset": [
+            "Verify identity",
+            "Generate secure reset link",
+            "Force password rotation at next login",
+            "Verify two-factor authentication active"
+        ]
+    }
+}

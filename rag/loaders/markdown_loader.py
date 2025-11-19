@@ -18,6 +18,7 @@ class MarkdownLoader:
             # Extraction métadonnées basiques
             metadata = {
                 'file_path': file_path,
+                'language': 'english' if 'english' in file_path else 'french',
                 'file_name': os.path.basename(file_path),
                 'file_size': os.path.getsize(file_path),
                 'context': self._extract_context_from_path(file_path)
@@ -52,7 +53,7 @@ class MarkdownLoader:
         else:
             return 'general'
     
-    def chunk_document(self, content: str, chunk_size: int = 500) -> List[Dict[str, Any]]:
+    def chunk_document(self, content: str, chunk_size: int = 300) -> List[Dict[str, Any]]:
         """Découpe un document en chunks pour l'indexation"""
         # Séparation par sections Markdown
         sections = re.split(r'\n#+\s+', content)

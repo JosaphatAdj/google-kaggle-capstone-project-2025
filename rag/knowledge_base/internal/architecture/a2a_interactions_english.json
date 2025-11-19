@@ -1,0 +1,25 @@
+{
+    "interaction_patterns": {
+        "support_technical": {
+            "faq_to_technical": "Complex problem detected → transfer",
+            "sentiment_escalation": "Negative sentiment → triggers escalation",
+            "bug_creation": "Bug ticket creation → R&D"
+        },
+        "support_marketing": {
+            "customer_feedback": "Customer feedback → Marketing",
+            "educational_content": "Educational scripts → Support FAQ",
+            "product_updates": "Product news → FAQ Agent"
+        },
+        "hr_it": {
+            "account_creation": "HR → create account → IT",
+            "incident_reporting": "IT → report incident → HR",
+            "onboarding_permissions": "Onboarding → assign permissions"
+        }
+    },
+    "a2a_rules": {
+        "mutual_authentication": "Mandatory mutual authentication",
+        "permission_verification": "Automatic permission verification",
+        "mandatory_logging": "Mandatory logging",
+        "standardized_responses": "Standardized responses"
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "categories": {
+        "hardware": {
+            "name": "Hardware problem",
+            "subcategories": [
+                "Sensors",
+                "Motors",
+                "Battery",
+                "Blades"
+            ],
+            "urgency_default": "medium"
+        },
+        "software": {
+            "name": "Software problem",
+            "subcategories": [
+                "Firmware",
+                "Mobile app",
+                "Update"
+            ],
+            "urgency_default": "medium"
+        },
+        "navigation": {
+            "name": "Navigation and mapping",
+            "subcategories": [
+                "Return to station",
+                "Uncleaned areas"
+            ],
+            "urgency_default": "low"
+        }
+    },
+    "urgency_levels": {
+        "urgent": "Robot unusable",
+        "normal": "Robot functional but annoying problem",
+        "low": "Information request"
+    }
+}

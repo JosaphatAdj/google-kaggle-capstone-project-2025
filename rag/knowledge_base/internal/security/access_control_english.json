@@ -1,0 +1,26 @@
+{
+    "roles_permissions": {
+        "standard_employee": {
+            "access": "General resources, internal procedures",
+            "restrictions": "Limited sensitive data"
+        },
+        "support_client": {
+            "access": "Customer history, support tickets",
+            "restrictions": "Limited writing, no HR access"
+        },
+        "support_technical": {
+            "access": "Complete technical documentation, advanced diagnostics",
+            "restrictions": "No employee data access"
+        },
+        "hr": {
+            "access": "Employee files, leave management, administrative documents",
+            "restrictions": "Limited technical data access"
+        }
+    },
+    "access_rules": {
+        "least_privilege": "Minimum necessary access",
+        "review_frequency": "Review every 90 days",
+        "log_retention": "Access logs kept 12 months",
+        "two_factor": "Two-factor authentication mandatory"
+    }
+}
