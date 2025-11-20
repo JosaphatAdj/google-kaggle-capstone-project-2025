@@ -1,0 +1,158 @@
+# ============================================================
+# ROBONEST SYSTEM - REQUIREMENTS
+# Mise à jour : COO Agent & Infrastructure complète
+# ============================================================
+
+# ============================================================
+# CORE DEPENDENCIES
+# ============================================================
+
+# Google Generative AI (Gemini)
+google-generativeai>=0.3.0
+
+# Google ADK (Agent Development Kit)
+google-adk>=0.1.0
+
+# ============================================================
+# SECURITY & AUTHENTICATION
+# ============================================================
+
+# JWT Tokens (COO Agent, Auth Manager)
+PyJWT>=2.8.0
+
+# Cryptography (Token signing, encryption)
+cryptography>=41.0.0
+
+# ============================================================
+# RAG & VECTOR DATABASE
+# ============================================================
+
+# ChromaDB (Vector store)
+chromadb>=0.4.22
+
+# Sentence Transformers (Embeddings)
+sentence-transformers>=2.2.2
+
+# LangChain (RAG orchestration)
+langchain>=0.1.0
+langchain-google-genai>=0.0.6
+
+# ============================================================
+# WEB & API
+# ============================================================
+
+# FastAPI (API endpoints)
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# HTTP Requests
+requests>=2.31.0
+httpx>=0.26.0
+
+# ============================================================
+# DATA PROCESSING
+# ============================================================
+
+# Data manipulation
+pandas>=2.1.0
+numpy>=1.24.0
+
+# JSON processing
+jsonschema>=4.20.0
+
+# ============================================================
+# EXTERNAL INTEGRATIONS
+# ============================================================
+
+# Jira API
+jira>=3.5.0
+
+# Gmail API
+google-auth>=2.25.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.110.0
+
+# ============================================================
+# DOCUMENT PROCESSING
+# ============================================================
+
+# Markdown
+markdown>=3.5.0
+
+# PDF (optional)
+PyPDF2>=3.0.0
+
+# ============================================================
+# TESTING
+# ============================================================
+
+# Testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+
+# ============================================================
+# UTILITIES
+# ============================================================
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Async I/O (built-in Python 3.7+, mais spécifié pour clarté)
+# asyncio - Built-in
+
+# Logging
+colorlog>=6.8.0
+
+# Progress bars
+tqdm>=4.66.0
+
+# ============================================================
+# PRODUCTION (OPTIONAL)
+# ============================================================
+
+# Redis (pour cache distribué en prod)
+redis>=5.0.0
+
+# Celery (pour queue tasks)
+celery>=5.3.0
+
+# Prometheus client (métriques)
+prometheus-client>=0.19.0
+
+# ============================================================
+# DEVELOPMENT (OPTIONAL)
+# ============================================================
+
+# Code quality
+black>=23.12.0
+flake8>=7.0.0
+pylint>=3.0.0
+mypy>=1.8.0
+
+# Auto-documentation
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+
+# ============================================================
+# NOTES
+# ============================================================
+
+# Installation complète :
+#   pip install -r requirements.txt
+
+# Installation production (minimal) :
+#   pip install -r requirements.txt --no-deps
+#   puis installer manuellement les core dependencies
+
+# Installation développement :
+#   pip install -r requirements.txt
+#   pip install -r requirements-dev.txt  (si fichier séparé)
+
+# ============================================================
+# VERSIONS PYTHON SUPPORTÉES
+# ============================================================
+# Python 3.9+
+# Recommandé : Python 3.11 (meilleures perfs async)
