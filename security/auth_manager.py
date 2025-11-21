@@ -117,6 +117,16 @@ class AuthManager:
             "read:rag:internal",
             "create:announcement",
             "send:email:internal"
+        ],
+
+        "alert_receiver": [
+            "read:tickets",
+            "create:tickets",
+            "read:rag:support",
+            "read:rag:products",
+            "read:rag:technical",
+            "send:message:coo",
+            "escalate:hitl"
         ]
     }
     
