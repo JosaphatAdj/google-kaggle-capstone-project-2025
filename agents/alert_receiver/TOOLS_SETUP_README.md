@@ -6,7 +6,7 @@
 - Automatic ticket creation
 - Ticket updates and comments
 - Full Jira API integration
-- **460 lines**
+
 
 ### ✅ **2. Gmail Tool** (`tools/gmail/gmail_tool.py`)  
 - HITL escalation emails

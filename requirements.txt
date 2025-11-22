@@ -44,6 +44,8 @@ langchain-google-genai>=0.0.6
 # FastAPI (API endpoints)
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
 
 # HTTP Requests
 requests>=2.31.0
