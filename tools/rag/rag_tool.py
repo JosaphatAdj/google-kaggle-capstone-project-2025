@@ -11,7 +11,7 @@ class RAGTool:
         self.logger = logging.getLogger(__name__)
         self.logger.info("✅ RAG Tool initialized")
     
-    def query_robo_brain(self, 
+    async def query_knowledge_base(self, 
         question: str, 
         context: Optional[str] = None,
         department: Optional[str] = None
@@ -27,22 +27,28 @@ class RAGTool:
         Returns:
             Dict containing search results and metadata
         """
-        try:
-            # Import async for RAG call
-            import asyncio
-            
+        try:    
             # Execute RAG query
-            results = asyncio.run(self.rag_engine.query(
-                question=question,
-                context=context,
-                n_results=5
-            ))
+            if context is not None:
+                results = await self.rag_engine.query(
+                    question=question,
+                    context=context,
+                    n_results=5
+                )
+            else:
+                results = await self.rag_engine.query(
+                    question=question,
+                    n_results=5
+                )
+            
+            # LOGGING RAW RESULTS FOR DEBUGGING
+            print(f"🔍 RAW RAG RESULTS (Before formatting): {results}")
             
             # Format results for agent consumption
             formatted_results = []
             for result in results:
                 formatted_results.append({
-                    "content": result["document"][:500] + "..." if len(result["document"]) > 500 else result["document"],
+                    "content": result["document"][:4000] + "..." if len(result["document"]) > 4000 else result["document"],
                     "metadata": result["metadata"],
                     "relevance_score": 1 - (result["distance"] if result["distance"] else 0.5)
                 })
@@ -56,7 +62,7 @@ class RAGTool:
                 "results": formatted_results
             }
             
-            self.logger.info(f"🔍 RAG Query: '{question}' → {len(results)} results")
+            print(f"🔍 RAG Query: '{question}' [Context: {context}] → {len(results)} results")
             return response
             
         except Exception as e:
@@ -70,7 +76,7 @@ class RAGTool:
     def get_tool(self) -> FunctionTool:
         """Returns the tool formatted for ADK - CORRECT SIGNATURE"""
         return FunctionTool(
-            func=self.query_robo_brain,  # ✅ Function reference
+            func=self.query_knowledge_base,  # ✅ Function reference
             # ADK FunctionTool uses different parameter names
            # description="Query RoboBrain knowledge base for information about error codes, support procedures, technical documentation, HR policies, and marketing guides."
         )

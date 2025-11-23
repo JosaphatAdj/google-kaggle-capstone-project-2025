@@ -69,25 +69,41 @@ class RAGEngine:
         except Exception as e:
             self.logger.error(f"❌ Erreur indexation {file_path}: {e}")
     
+    
     async def query(self, question: str, context: str = None, n_results: int = 5) -> List[Dict]:
-        """Interroge la base de connaissances"""
+        """Interroge la base de connaissances - VERSION FLEXIBLE"""
         try:
-            # Filtre par contexte si spécifié
-            filter_metadata = {"context": context} if context else None
-            
-            results = self.vector_store.search(
-                query=question,
-                n_results=n_results,
-                filter_metadata=filter_metadata
-            )
-            
+            # Si contexte spécifié, essayer avec filtre, sinon sans filtre
+            if context:
+                # Essayer d'abord avec le filtre
+                results = self.vector_store.search(
+                    query=question,
+                    n_results=n_results,
+                    filter_metadata={"context": context}
+                )
+                # Si aucun résultat avec filtre, essayer sans filtre
+                if len(results) == 0:
+                    self.logger.info(f"🔍 Aucun résultat avec filtre '{context}', recherche sans filtre")
+                    
+                    results = self.vector_store.search(
+                        query=question,
+                        n_results=n_results,    
+                    )
+            else:
+                # Recherche sans filtre
+                results = self.vector_store.search(
+                    query=question,
+                    n_results=n_results,
+                )
+        
             self.logger.info(f"🔍 Recherche: '{question}' → {len(results)} résultats")
             return results
-            
-        except Exception as e:
+        
+        except Exception as e:  
             self.logger.error(f"❌ Erreur recherche: {e}")
             return []
-    
+
+   
     def get_stats(self) -> Dict[str, Any]:
         """Retourne les statistiques du système RAG"""
         vector_stats = self.vector_store.get_collection_stats()

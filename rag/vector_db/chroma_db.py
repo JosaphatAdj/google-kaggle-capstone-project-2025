@@ -8,7 +8,8 @@ class ChromaDBVectorStore:
     """Gestionnaire de base vectorielle ChromaDB pour RoboNest"""
     
     def __init__(self, persist_directory: str = "./chroma_db"):
-        self.persist_directory = persist_directory
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        self.persist_directory = os.path.join(project_root, "chroma_db")
         self.client = None
         self.collection = None
         self.logger = logging.getLogger(__name__)

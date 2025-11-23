@@ -1,6 +1,7 @@
+# scripts/index_knowledge_base.py (CORRIGÉ)
 #!/usr/bin/env python3
 """
-Script d'indexation de la base de connaissances RoboNest
+Script d'indexation de la base de connaissances RoboNest - VERSION CORRIGÉE
 """
 
 import sys
@@ -10,7 +11,9 @@ import logging
 from pathlib import Path
 
 # Ajout du chemin racine pour les imports
-sys.path.append(str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+project_root = current_dir.parent
+sys.path.append(str(project_root))
 
 from rag.rag_engine import RAGEngine
 
@@ -21,16 +24,19 @@ logging.basicConfig(
 )
 
 async def index_entire_knowledge_base():
-    """Indexe toute la base de connaissances RoboNest"""
+    """Indexe toute la base de connaissances RoboNest - VERSION CORRIGÉE"""
     logger = logging.getLogger("indexer")
-    rag_engine = RAGEngine()
     
-    # Dossier racine de la connaissance
-    knowledge_base_path = Path("rag/knowledge_base")
+    # Chemin ABSOLU vers la knowledge base
+    knowledge_base_path = project_root / "rag" / "knowledge_base"
+    
+    print(f"🔍 Recherche dans: {knowledge_base_path.absolute()}")
     
     if not knowledge_base_path.exists():
-        logger.error("❌ Dossier knowledge_base non trouvé")
+        logger.error(f"❌ Dossier knowledge_base non trouvé: {knowledge_base_path}")
         return
+    
+    rag_engine = RAGEngine()
     
     # Compteurs
     total_files = 0
@@ -43,15 +49,17 @@ async def index_entire_knowledge_base():
     
     # Parcours récursif de tous les fichiers
     for file_path in knowledge_base_path.rglob('*'):
-        if file_path.is_file() and file_path.suffix in supported_extensions:
+        if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
             total_files += 1
-            logger.info(f"📄 Indexation: {file_path}")
+            relative_path = file_path.relative_to(project_root)
+            logger.info(f"📄 Indexation: {relative_path}")
             
             try:
                 await rag_engine.index_document(str(file_path))
                 indexed_files += 1
+                logger.info(f"✅ Indexé: {relative_path}")
             except Exception as e:
-                logger.error(f"❌ Erreur avec {file_path}: {e}")
+                logger.error(f"❌ Erreur avec {relative_path}: {e}")
     
     # Affichage des statistiques finales
     stats = rag_engine.get_stats()
