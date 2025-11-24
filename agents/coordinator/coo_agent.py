@@ -198,7 +198,7 @@ class COOAgent(BaseAgent):
         logger.info(f"📋 Nouvelle tâche: {task_id} ({task_type}, urgence: {urgency})")
         
         # 1. Consulter RAG pour déterminer l'agent approprié
-        assignment = self.coordinator_tools.determine_agent_assignment(
+        assignment = await self.coordinator_tools.determine_agent_assignment(
             task_description=task_description,
             task_type=task_type,
             urgency=urgency,
@@ -209,7 +209,7 @@ class COOAgent(BaseAgent):
         
         # 2. Vérifier si escalation immédiate nécessaire
         if "sentiment" in payload:
-            escalation_check = self.coordinator_tools.check_escalation_policy(
+            escalation_check = await self.coordinator_tools.check_escalation_policy(
                 issue_type=task_type,
                 sentiment=payload.get("sentiment", "neutral"),
                 severity=urgency,
@@ -472,7 +472,7 @@ class COOAgent(BaseAgent):
         self.performance_metrics["escalations_handled"] += 1
         
         # Consulter RAG pour politique d'escalation
-        escalation_decision = self.coordinator_tools.check_escalation_policy(
+        escalation_decision = await self.coordinator_tools.check_escalation_policy(
             issue_type=escalation_type,
             sentiment=payload.get("sentiment", "neutral"),
             severity=severity

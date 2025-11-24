@@ -11,13 +11,15 @@ from datetime import datetime
 import logging
 from pathlib import Path
 import sys
+import httpx
 
 # Add root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from agents.base import BaseAgent
+from agents.base.base_agent import BaseAgent
 from tools.rag.rag_tool import RAGTool
-from communication import MessageBus, Message
+from communication.message_bus import MessageBus, Message
+from communication.protocols import A2AMessage, ProtocolValidator, MessageType
 from security import AuthManager, AuditLog, ActionType
 
 logger = logging.getLogger(__name__)
@@ -77,7 +79,8 @@ class AlertReceiverAgent(BaseAgent):
     2. Consult RAG for error code information
     3. Classify urgency and severity
     4. Forward to COO Agent via Message Bus
-    5. Log all alerts in audit trail
+    5. Receive solutions from COO/TechSupport and forward to Robot
+    6. Log all alerts in audit trail
     """
     
     def __init__(
@@ -89,12 +92,6 @@ class AlertReceiverAgent(BaseAgent):
     ):
         """
         Initialize Alert Receiver Agent
-        
-        Args:
-            agent_id: Agent ID
-            auth_manager: Auth manager
-            audit_log: Audit log
-            message_bus: Message bus for A2A communication
         """
         super().__init__(
             agent_id=agent_id,
@@ -107,7 +104,7 @@ Your responsibilities:
 2. Consult RoboBrain (RAG) to understand error codes
 3. Classify urgency based on error severity and type
 4. Format and forward alerts to COO Agent
-5. Log all alerts for audit trail
+5. Receive solutions and forward them to the robot
 
 Critical Errors (Immediate Escalation):
 - E07: Battery swollen / Fire hazard
@@ -149,103 +146,149 @@ Always:
         self.add_tool(self.classify_error)
         self.add_tool(self.query_error_code)
         
+        # Track active alerts to map task_id -> robot_id
+        self.active_alerts: Dict[str, Dict[str, Any]] = {}
+        
         logger.info(f"✅ Alert Receiver Agent initialized: {self.agent_id}")
     
-    def query_error_code(self, error_code: str) -> dict:
-        """
-        Query RAG for error code information
+    async def start(self):
+        """Start the agent and subscribe to topics"""
+        if not self.message_bus:
+            logger.error("❌ Message bus not configured for Alert Receiver")
+            return
+            
+        # Subscribe to task completion (to receive solutions)
+        self.message_bus.subscribe(
+            topic="task.completed",
+            agent_id=self.agent_id,
+            token=self.token,
+            handler=self._handle_message
+        )
         
-        Args:
-            error_code: Error code (e.g., "E01")
-        
-        Returns:
-            Error code details
-        """
+        logger.info(f"✅ Alert Receiver Agent started and listening")
+
+    async def _handle_message(self, message: Message):
+        """Handle incoming messages"""
         try:
-            # Query RAG
+            if message.topic == "task.completed":
+                await self._handle_task_completed(message.payload)
+        except Exception as e:
+            logger.error(f"❌ Error handling message: {e}")
+
+    async def _handle_task_completed(self, payload: Dict[str, Any]):
+        """
+        Handle task completion - check if it's a robot alert resolution
+        """
+        task_id = payload.get("task_id")
+        result = payload.get("result", {})
+        
+        # Check if this is an alert we are tracking
+        # Or if the task_id starts with ALERT-
+        if task_id and task_id.startswith("ALERT-"):
+            logger.info(f"📥 Received resolution for {task_id}")
+            
+            # Extract solution details
+            # The result structure from TechSupport is:
+            # { "result": { "action": "...", "ticket_id": "...", ... } }
+            # Or sometimes nested depending on how BaseAgent wraps it.
+            # Let's assume TechSupport returns the solution dict directly as 'result'
+            
+            solution = result.get("result") if isinstance(result, dict) and "result" in result else result
+            
+            if not solution:
+                logger.warning(f"⚠️ No solution found in task result for {task_id}")
+                return
+
+            # Find robot_id from active alerts or parse from task_id
+            robot_id = None
+            if task_id in self.active_alerts:
+                robot_id = self.active_alerts[task_id]["robot_id"]
+                # Clean up
+                del self.active_alerts[task_id]
+            else:
+                # Try to parse ALERT-ROBOTID-TIMESTAMP
+                parts = task_id.split("-")
+                if len(parts) >= 3:
+                    robot_id = f"{parts[1]}-{parts[2]}" # Assuming XR25-001 format
+            
+            if robot_id:
+                await self.send_solution_to_robot(robot_id, solution)
+            else:
+                logger.error(f"❌ Could not determine robot_id for task {task_id}")
+
+    async def send_solution_to_robot(self, robot_id: str, solution: Dict[str, Any]):
+        """
+        Send solution to robot API
+        """
+        logger.info(f"🚀 Forwarding solution to robot {robot_id}: {solution.get('action')}")
+        
+        # Construct payload for robot
+        payload = {
+            "action": solution.get("action", "unknown"),
+            "error_code": solution.get("error_code", "UNKNOWN"),
+            "ticket_id": solution.get("ticket_id", "UNKNOWN"),
+            "agent_id": solution.get("agent_id", "tech_support"),
+            "details": solution.get("details", {}),
+            "requires_hitl": solution.get("requires_hitl", False)
+        }
+        
+        # Robot URL (assuming local for now, in prod use service discovery)
+        robot_url = "http://localhost:8001"
+        
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{robot_url}/solution/execute",
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"✅ Solution delivered to robot {robot_id}")
+                else:
+                    logger.error(f"❌ Failed to deliver solution: {response.status_code} - {response.text}")
+                    
+        except Exception as e:
+            logger.error(f"❌ Error contacting robot: {e}")
+
+    def query_error_code(self, error_code: str) -> dict:
+        """Query RAG for error code information"""
+        try:
             rag_result = self.rag_tool.query_knowledge_base(
                 question=f"What is error code {error_code}? What are the causes and solutions?",
-                context="products",  # products/error_codes/
+                context="products",
                 department="technical"
             )
-            
-            return {
-                "error_code": error_code,
-                "details": rag_result
-            }
-            
+            return {"error_code": error_code, "details": rag_result}
         except Exception as e:
             logger.error(f"❌ RAG query failed: {e}")
-            return {
-                "error_code": error_code,
-                "details": {"error": "RAG query failed"},
-                "fallback": True
-            }
+            return {"error_code": error_code, "details": {"error": "RAG query failed"}, "fallback": True}
     
-    def classify_error(
-        self,
-        error_code: str,
-        severity: str,
-        sensor_data: Optional[dict] = None
-    ) -> dict:
-        """
-        Classify error urgency
-        
-        Args:
-            error_code: Error code
-            severity: Reported severity
-            sensor_data: Sensor readings
-        
-        Returns:
-            Classification with urgency level
-        """
-        # Critical conditions
+    def classify_error(self, error_code: str, severity: str, sensor_data: Optional[dict] = None) -> dict:
+        """Classify error urgency"""
         critical_codes = ["E07", "E08", "E09"]
         temperature = sensor_data.get("temperature", 0) if sensor_data else 0
         
         if error_code in critical_codes or temperature > 60:
-            return {
-                "urgency": "critical",
-                "escalate_immediately": True,
-                "reason": "Safety hazard detected"
-            }
+            return {"urgency": "critical", "escalate_immediately": True, "reason": "Safety hazard detected"}
         
-        # High priority
         high_priority_codes = ["E01", "E02", "E03"]
         if error_code in high_priority_codes or severity == "high":
-            return {
-                "urgency": "high",
-                "escalate_immediately": False,
-                "reason": "High priority issue"
-            }
+            return {"urgency": "high", "escalate_immediately": False, "reason": "High priority issue"}
         
-        # Medium
-        return {
-            "urgency": "medium",
-            "escalate_immediately": False,
-            "reason": "Standard issue"
-        }
+        return {"urgency": "medium", "escalate_immediately": False, "reason": "Standard issue"}
     
     async def process_alert(self, alert: RobotAlert) -> Dict[str, Any]:
-        """
-        Process incoming robot alert
-        
-        Args:
-            alert: Robot alert data
-        
-        Returns:
-            Processing result
-        """
+        """Process incoming robot alert"""
         import time
         start_time = time.time()
         
         logger.info(f"🚨 Alert received: {alert.robot_id} - {alert.error_code}")
         
         try:
-            # 1. Query RAG for error code
+            # 1. Query RAG
             error_info = self.query_error_code(alert.error_code)
             
-            # 2. Classify urgency
+            # 2. Classify
             classification = self.classify_error(
                 error_code=alert.error_code,
                 severity=alert.severity,
@@ -253,8 +296,9 @@ Always:
             )
             
             # 3. Build task for COO
+            task_id = f"ALERT-{alert.robot_id}-{int(time.time())}"
             task_data = {
-                "task_id": f"ALERT-{alert.robot_id}-{int(time.time())}",
+                "task_id": task_id,
                 "task_type": "robot_alert",
                 "robot_id": alert.robot_id,
                 "error_code": alert.error_code,
@@ -265,6 +309,12 @@ Always:
                 "error_details": error_info,
                 "classification": classification,
                 "escalate_immediately": classification["escalate_immediately"]
+            }
+            
+            # Store active alert
+            self.active_alerts[task_id] = {
+                "robot_id": alert.robot_id,
+                "timestamp": time.time()
             }
             
             # 4. Send to COO via Message Bus
@@ -278,18 +328,13 @@ Always:
                 )
                 
                 await self.message_bus.publish(message, self.token)
-                
-                logger.info(f"✅ Alert forwarded to COO: {task_data['task_id']}")
+                logger.info(f"✅ Alert forwarded to COO: {task_id}")
             
             # 5. Audit log
             self.audit_log.log_action(
                 action_type=ActionType.MESSAGE_RECEIVED,
                 agent_id=self.agent_id,
-                details={
-                    "robot_id": alert.robot_id,
-                    "error_code": alert.error_code,
-                    "urgency": classification["urgency"]
-                },
+                details={"robot_id": alert.robot_id, "error_code": alert.error_code},
                 severity=ActionType.TICKET_CREATED
             )
             
@@ -299,35 +344,21 @@ Always:
             
             return {
                 "status": "success",
-                "task_id": task_data["task_id"],
+                "task_id": task_id,
                 "urgency": classification["urgency"],
-                "forwarded_to": "coo_agent"
+                "forwarded_to": "coo_agent",
+                "message": "Alert received and processing started. Solution will be sent to robot asynchronously."
             }
             
         except Exception as e:
             logger.error(f"❌ Alert processing failed: {e}")
             processing_time = time.time() - start_time
             self.update_metrics(success=False, processing_time=processing_time)
-            
-            return {
-                "status": "failed",
-                "error": str(e)
-            }
+            return {"status": "failed", "error": str(e)}
     
-    async def process_task(
-        self,
-        task_description: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Process generic task (for BaseAgent compatibility)
-        """
-        # Alert Receiver primarily handles alerts via REST API
-        # But can process tasks if needed
-        return {
-            "status": "success",
-            "message": "Alert Receiver processes alerts via REST API"
-        }
+    async def process_task(self, task_description: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Process generic task (for BaseAgent compatibility)"""
+        return {"status": "success", "message": "Alert Receiver processes alerts via REST API"}
 
 
 # ============================================================
@@ -349,48 +380,100 @@ async def startup_event():
     """Initialize agent on startup"""
     global alert_agent
     
-    # You'll inject these from main.py
-    alert_agent = AlertReceiverAgent()
+    # Initialize dependencies
+    auth_manager = AuthManager()
+    audit_log = AuditLog()
+    message_bus = MessageBus(auth_manager=auth_manager, audit_log=audit_log)
+    
+    # Start Message Bus
+    await message_bus.start()
+    
+    # Initialize Agent
+    alert_agent = AlertReceiverAgent(
+        auth_manager=auth_manager,
+        audit_log=audit_log,
+        message_bus=message_bus
+    )
+    
+    # Start Agent (subscribe to topics)
+    await alert_agent.start()
+    
     logger.info("✅ Alert Receiver Agent started")
 
 
 @app.post("/alerts/robot-issue", response_model=Dict[str, Any])
 async def receive_robot_alert(alert: RobotAlert):
-    """
-    Receive robot alert
-    
-    Args:
-        alert: Robot alert data
-    
-    Returns:
-        Processing result
-    
-    Example:
-        POST /alerts/robot-issue
-        {
-            "robot_id": "XR25-001",
-            "error_code": "E01",
-            "severity": "medium",
-            "description": "Wheels blocked",
-            "sensor_data": {
-                "battery_level": 85,
-                "temperature": 45
-            }
-        }
-    """
+    """Receive robot alert"""
     if not alert_agent:
         raise HTTPException(status_code=503, detail="Agent not initialized")
     
     try:
         result = await alert_agent.process_alert(alert)
-        
         if result["status"] == "success":
             return result
         else:
             raise HTTPException(status_code=500, detail=result.get("error"))
-            
     except Exception as e:
         logger.error(f"❌ Alert processing error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/a2a/message", response_model=Dict[str, Any])
+async def receive_a2a_message(message: Dict[str, Any]):
+    """Receive A2A Standard Message"""
+    if not alert_agent:
+        raise HTTPException(status_code=503, detail="Agent not initialized")
+    
+    try:
+        # 1. Deserialize and Validate
+        try:
+            a2a_msg = A2AMessage.from_dict(message)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid A2A format: {e}")
+            
+        is_valid, error = ProtocolValidator.validate_message(a2a_msg)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=f"Protocol validation failed: {error}")
+            
+        # 2. Process based on type
+        if a2a_msg.message_type == MessageType.ESCALATION_REQUEST:
+            payload = a2a_msg.payload
+            sensor_data = payload.get("sensor_data", {})
+            robot_id = payload.get("robot_id", a2a_msg.sender_id)
+            
+            robot_alert = RobotAlert(
+                robot_id=robot_id,
+                error_code=payload.get("error_code", "UNKNOWN"),
+                severity=payload.get("severity", "medium"),
+                timestamp=a2a_msg.timestamp,
+                description=payload.get("description") or payload.get("reason", "No description"),
+                sensor_data=SensorData(**sensor_data) if sensor_data else None
+            )
+            return await alert_agent.process_alert(robot_alert)
+            
+        elif a2a_msg.message_type == MessageType.ALERT:
+            payload = a2a_msg.payload
+            robot_alert = RobotAlert(
+                robot_id=payload.get("robot_id", a2a_msg.sender_id),
+                error_code=payload.get("error_code", "UNKNOWN"),
+                severity=payload.get("severity", "medium"),
+                timestamp=a2a_msg.timestamp,
+                description=payload.get("description", ""),
+                sensor_data=SensorData(**payload.get("sensor_data", {})) if payload.get("sensor_data") else None
+            )
+            return await alert_agent.process_alert(robot_alert)
+            
+        else:
+            return {
+                "status": "acknowledged",
+                "message": f"Message type {a2a_msg.message_type.value} received but not fully implemented yet",
+                "correlation_id": a2a_msg.correlation_id
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ A2A processing error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -404,34 +487,8 @@ async def health_check():
     }
 
 
-# ============================================================
-# MAIN (for testing)
-# ============================================================
-
 if __name__ == "__main__":
     import uvicorn
-    
     logging.basicConfig(level=logging.INFO)
-    
-    print("\n" + "="*60)
-    print("ALERT RECEIVER AGENT - SERVER")
-    print("="*60)
-    print("\nStarting FastAPI server on port 8000...")
-    print("API Documentation: http://localhost:8000/docs")
-    print("\nTest with:")
-    print("""
-    curl -X POST http://localhost:8000/alerts/robot-issue \\
-      -H "Content-Type: application/json" \\
-      -d '{
-        "robot_id": "XR25-001",
-        "error_code": "E01",
-        "severity": "medium",
-        "description": "Wheels blocked",
-        "sensor_data": {
-          "battery_level": 85,
-          "temperature": 45
-        }
-      }'
-    """)
-    
+    print("Starting Alert Receiver...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -382,7 +382,6 @@ python main.py
 ## ✅ Checklist Démo Kaggle
 
 - [x] Tous les patterns ADK intégrés
-- [x] Code 100% ADK (pas d'ancien code mélangé)
 - [x] Re-escalation si solution échoue
 - [x] HITL pour cas critiques
 - [x] Memory + Self-healing
@@ -392,4 +391,3 @@ python main.py
 
 ---
 
-**🚀 Prêt à impressionner Kaggle !**

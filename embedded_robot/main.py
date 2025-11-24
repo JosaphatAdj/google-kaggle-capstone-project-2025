@@ -12,6 +12,11 @@ from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any
 from datetime import datetime
 import httpx
+import sys
+from pathlib import Path
+
+# Add root to path to allow importing communication
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -30,6 +35,9 @@ from adk_agents.sensor_agents import create_sensor_sequential_agent
 from adk_agents.diagnostic_agent import create_diagnostic_loop_agent
 from adk_agents.action_agent import create_action_agent
 from adk_agents.hardware_simulator import HardwareSimulator, ErrorCode
+
+# Communication imports
+from communication.protocols import MessageFactory, TaskPriority
 
 logger = logging.getLogger(__name__)
 
@@ -185,26 +193,30 @@ class RobotState:
         self.escalation_count += 1
         logger.info(f"📤 Escalating {error_code} to support (Total: {self.escalation_count})")
         
-        # Prepare escalation payload
-        escalation_data = {
-            "robot_id": self.robot_id,
-            "error_code": error_code,
-            "severity": self._classify_severity(error_code),
-            "timestamp": datetime.utcnow().isoformat(),
-            "description": f"Error {error_code} detected",
-            "sensor_data": self.hardware.get_sensor_readings(),
-            "diagnostics": diagnostics,
-            "attempted_solution": attempted_solution,
-            "escalation_count": self.escalation_count
-        }
+        # Create A2A Escalation Message
+        message = MessageFactory.create_escalation(
+            sender_id=self.robot_id,
+            escalation_id=f"ESC-{self.escalation_count}-{int(datetime.utcnow().timestamp())}",
+            escalation_type="technical",
+            severity=self._classify_severity(error_code),
+            reason=f"Error {error_code} detected",
+            ticket_id=f"ROBO-{self.escalation_count:04d}",
+            context={
+                "robot_id": self.robot_id,
+                "error_code": error_code,
+                "sensor_data": self.hardware.get_sensor_readings(),
+                "diagnostics": diagnostics,
+                "attempted_solution": attempted_solution
+            }
+        )
         
         try:
             # Send HTTP POST to alert receiver
             import httpx
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
-                    f"{self.support_url}/alerts/robot-issue",
-                    json=escalation_data
+                    f"{self.support_url}/a2a/message",
+                    json=message.to_dict()
                 )
                 
                 if response.status_code == 200:

@@ -41,8 +41,6 @@ class RAGTool:
                     n_results=5
                 )
             
-            # LOGGING RAW RESULTS FOR DEBUGGING
-            print(f"🔍 RAW RAG RESULTS (Before formatting): {results}")
             
             # Format results for agent consumption
             formatted_results = []
@@ -62,7 +60,7 @@ class RAGTool:
                 "results": formatted_results
             }
             
-            print(f"🔍 RAG Query: '{question}' [Context: {context}] → {len(results)} results")
+            print(f"RAG Query: '{question}' [Context: {context}] → {len(results)} results")
             return response
             
         except Exception as e:

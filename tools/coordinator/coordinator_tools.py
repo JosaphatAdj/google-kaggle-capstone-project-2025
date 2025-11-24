@@ -29,7 +29,7 @@ class CoordinatorTools:
         # Cache des décisions récentes pour cohérence
         self.decision_cache: Dict[str, Any] = {}
     
-    def determine_agent_assignment(
+    async def determine_agent_assignment(
         self,
         task_description: str,
         task_type: str,
@@ -72,7 +72,7 @@ class CoordinatorTools:
             )
             
             # Consulter RAG pour architecture des agents
-            rag_result = self.rag_tool.query_knowledge_base(
+            rag_result = await self.rag_tool.query_knowledge_base(
                 question=rag_query,
                 context="internal",  # internal/architecture/agent_roles.md
                 department="coordination"
@@ -98,7 +98,7 @@ class CoordinatorTools:
             # Fallback sur règles simples
             return self._fallback_assignment(task_type, urgency)
     
-    def check_escalation_policy(
+    async def check_escalation_policy(
         self,
         issue_type: str,
         sentiment: str,
@@ -142,7 +142,7 @@ class CoordinatorTools:
                 f"sentiment {sentiment}, sévérité {severity}"
             )
             
-            rag_result = self.rag_tool.query_knowledge_base(
+            rag_result = await self.rag_tool.query_knowledge_base(
                 question=rag_query,
                 context="support",  # support/resolution_guides/escalation_criteria.md
                 department="coordination"
@@ -171,7 +171,7 @@ class CoordinatorTools:
             # Fallback: escalader si critique
             return self._fallback_escalation(severity, sentiment)
     
-    def get_workflow_steps(
+    async def get_workflow_steps(
         self,
         workflow_type: str,
         context: Optional[Dict[str, Any]] = None
@@ -201,7 +201,7 @@ class CoordinatorTools:
             # Requête RAG
             rag_query = f"Workflow complet pour {workflow_type}"
             
-            rag_result = self.rag_tool.query_knowledge_base(
+            rag_result = await self.rag_tool.query_knowledge_base(
                 question=rag_query,
                 context="internal",  # internal/workflows/core_workflows.md
                 department="coordination"
@@ -218,7 +218,7 @@ class CoordinatorTools:
             logger.error(f"❌ Erreur récupération workflow: {e}")
             return {"workflow": workflow_type, "steps": [], "error": str(e)}
     
-    def get_agent_capabilities(
+    async def get_agent_capabilities(
         self,
         agent_type: str
     ) -> Dict[str, Any]:
@@ -247,7 +247,7 @@ class CoordinatorTools:
             # Requête RAG
             rag_query = f"Capacités et limitations agent {agent_type}"
             
-            rag_result = self.rag_tool.query_knowledge_base(
+            rag_result = await self.rag_tool.query_knowledge_base(
                 question=rag_query,
                 context="internal",  # internal/architecture/agent_roles.md
                 department="coordination"
