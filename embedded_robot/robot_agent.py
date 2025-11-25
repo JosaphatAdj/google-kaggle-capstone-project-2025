@@ -388,10 +388,20 @@ class InteractiveSimulator:
                 if cmd == "1":
                     print("\n⚠️ Simulating E01: Wheels blocked...")
                     self.robot.sensors.simulate_wheels_blocked()
-                    
+                    # Manually trigger error detection and alert
+                    self.robot.current_error = ErrorCode.E01
+                    self.robot.state = RobotState.ERROR
+                    sensors = self.robot.sensors.get_readings()
+                    await self.robot._send_alert(ErrorCode.E01, sensors)
+    
                 elif cmd == "2":
                     print("\n🚨 Simulating E07: Battery critical (HITL required)...")
                     self.robot.sensors.simulate_battery_issue()
+                    # Manually trigger error detection and alert
+                    self.robot.current_error = ErrorCode.E07
+                    self.robot.state = RobotState.ERROR
+                    sensors = self.robot.sensors.get_readings()
+                    await self.robot._send_alert(ErrorCode.E07, sensors)
                     
                 elif cmd == "3":
                     print("\n🔧 Fixing wheels...")

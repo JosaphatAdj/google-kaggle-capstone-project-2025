@@ -73,14 +73,8 @@ async def test_orchestration():
     print("All agents started")
     
     # 3. Mock Robot Interaction
-    future_result = asyncio.Future()
-    
-    async def mock_send_solution(robot_id, solution):
-        print(f"[MOCK] Sending solution to {robot_id}: {solution}")
-        if not future_result.done():
-            future_result.set_result(solution)
-    
-    alert_receiver.send_solution_to_robot = mock_send_solution
+    # We no longer mock send_solution_to_robot because we want to verify it queues the solution
+    # future_result = asyncio.Future()
     
     # 4. Simulate Alert
     print("\nSimulating Robot Alert...")
@@ -98,9 +92,20 @@ async def test_orchestration():
     # 5. Wait for Resolution
     print("Waiting for resolution (timeout 20s)...")
     try:
-        solution = await asyncio.wait_for(future_result, timeout=20.0)
-        print("\nORCHESTRATION SUCCESSFUL!")
-        print(f"   Solution received: {solution}")
+        # Poll the solution queue
+        start_time = asyncio.get_event_loop().time()
+        solution = None
+        while (asyncio.get_event_loop().time() - start_time) < 20.0:
+            if "XR25-TEST" in alert_receiver.solution_queue:
+                solution = alert_receiver.solution_queue["XR25-TEST"]
+                break
+            await asyncio.sleep(0.5)
+            
+        if solution:
+            print("\nORCHESTRATION SUCCESSFUL!")
+            print(f"   Solution queued for polling: {solution}")
+        else:
+            raise asyncio.TimeoutError()
         
     except asyncio.TimeoutError:
         print("\nORCHESTRATION TIMED OUT")

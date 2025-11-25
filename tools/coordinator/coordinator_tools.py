@@ -339,6 +339,16 @@ class CoordinatorTools:
         
         # Mots-clés pour assignation rapide
         description_lower = description.lower()
+
+        # RÈGLE PRIORITAIRE: Robot alerts vont toujours au technical_support
+        if task_type == "robot_alert":
+            return {
+                "assigned_agent": "technical_support",
+                "reason": "Alerte robot nécessitant support technique",
+                "alternative": "escalation",
+                "confidence": 0.90
+            }
+
         
         # Problèmes techniques complexes
         if any(word in description_lower for word in [
