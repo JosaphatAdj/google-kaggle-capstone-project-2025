@@ -242,10 +242,10 @@ Always:
         logger.info(f"✅ Solution queued for {robot_id}")
 
 
-    def query_error_code(self, error_code: str) -> dict:
+    async def query_error_code(self, error_code: str) -> dict:
         """Query RAG for error code information"""
         try:
-            rag_result = self.rag_tool.query_knowledge_base(
+            rag_result = await self.rag_tool.query_knowledge_base(
                 question=f"What is error code {error_code}? What are the causes and solutions?",
                 context="products",
                 department="technical"
@@ -278,7 +278,7 @@ Always:
     
         try:
             # 1. Query RAG
-            error_info = self.query_error_code(alert.error_code)
+            error_info = await self.query_error_code(alert.error_code)
         
             # 2. Classify
             classification = self.classify_error(
