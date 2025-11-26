@@ -10,6 +10,13 @@ from datetime import datetime
 import logging
 from enum import Enum
 import random
+import sys
+from pathlib import Path
+
+# Add root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+# MCP HTTP Client helpers
+from embedded_robot.mcp_http_client import send_alert_http, poll_solution_http
 
 logger = logging.getLogger(__name__)
 
@@ -212,21 +219,19 @@ class EmbeddedRobotAgent:
             
             logger.info(f"📤 Sending alert: {error.name} ({severity})")
             
-            # Send to Alert Receiver
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(
-                    f"{self.alert_receiver_url}/alerts/robot-issue",
-                    json=alert_data
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    logger.info(f"✅ Alert sent successfully. Task ID: {result.get('task_id')}")
-                    self.last_alert_sent = result
-                    self.alert_acknowledged = True
-                else:
-                    logger.error(f"❌ Alert failed: {response.status_code} - {response.text}")
-                    
+            # Send to Alert Receiver MCP endpoint
+            content = await send_alert_http(
+                robot_id=self.robot_id,
+                error_code=error.name,
+                severity=severity,
+                description=error.value,
+                sensors=sensors
+            )
+
+            logger.info(f"✅ Alert sent successfully: {content}")
+            self.last_alert_sent = alert_data
+            self.alert_acknowledged = True
+
         except Exception as e:
             logger.error(f"❌ Failed to send alert: {e}")
     
@@ -499,6 +504,9 @@ import logging
 from enum import Enum
 import random
 
+# MCP HTTP Client helpers
+from embedded_robot.mcp_http_client import send_alert_http, poll_solution_http
+
 logger = logging.getLogger(__name__)
 
 
@@ -700,21 +708,19 @@ class EmbeddedRobotAgent:
             
             logger.info(f"📤 Sending alert: {error.name} ({severity})")
             
-            # Send to Alert Receiver
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(
-                    f"{self.alert_receiver_url}/alerts/robot-issue",
-                    json=alert_data
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    logger.info(f"✅ Alert sent successfully. Task ID: {result.get('task_id')}")
-                    self.last_alert_sent = result
-                    self.alert_acknowledged = True
-                else:
-                    logger.error(f"❌ Alert failed: {response.status_code} - {response.text}")
-                    
+            # Send to Alert Receiver MCP endpoint
+            content = await send_alert_http(
+                robot_id=self.robot_id,
+                error_code=error.name,
+                severity=severity,
+                description=error.value,
+                sensors=sensors
+            )
+
+            logger.info(f"✅ Alert sent successfully: {content}")
+            self.last_alert_sent = alert_data
+            self.alert_acknowledged = True
+
         except Exception as e:
             logger.error(f"❌ Failed to send alert: {e}")
     

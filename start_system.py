@@ -86,9 +86,38 @@ class RoboNestSystem:
         logger.info("🎉 SYSTÈME ROBONEST OPÉRATIONNEL")
         logger.info("="*60)
         logger.info("Les agents sont prêts à recevoir des alertes")
+        
+        # 5. Start MCP HTTP Server for robot connections
+        logger.info("🌐 Démarrage du serveur MCP HTTP sur port 8001...")
+        await self._start_mcp_server()
+        
         logger.info("Lancez le robot séparément avec:")
         logger.info("  python embedded_robot/robot_agent.py")
         logger.info("="*60 + "\n")
+    
+    async def _start_mcp_server(self):
+        """Start MCP HTTP server for robot connections"""
+        import uvicorn
+        from agents.alert_receiver import mcp_server
+        
+        # Set the global agent reference in MCP server
+        mcp_server.set_agent(self.alert_receiver)
+        
+        # Configure uvicorn
+        config = uvicorn.Config(
+            mcp_server.app,
+            host="0.0.0.0",
+            port=8001,
+            log_level="info"
+        )
+        server = uvicorn.Server(config)
+        
+        # Run in background task
+        self.mcp_server_task = asyncio.create_task(server.serve())
+        
+        # Wait a bit for server to start
+        await asyncio.sleep(1)
+        logger.info("✅ MCP HTTP Server démarré sur http://localhost:8001")
     
     async def run_forever(self):
         """Garde le système en cours d'exécution"""
