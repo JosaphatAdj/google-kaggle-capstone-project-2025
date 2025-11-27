@@ -176,10 +176,15 @@ class TechnicalSupportAgent(BaseAgent):
         # Simple rule-based response for testing (LlmAgent.run() doesn't exist)
         # In production, this would call the LLM via generate_content or similar
         task_lower = task_description.lower()
-        if "wheel" in task_lower and "block" in task_lower:
-            agent_response = "Clean wheels obstructed. Recommend clean_wheels procedure."
+        error_code = context.get("error_code") if context else None
+        
+        # Determine action based on error code
+        if error_code == "E01" or ("wheel" in task_lower and "block" in task_lower):
+            agent_response = "Wheels obstructed. Recommend clean_wheels procedure."
+        elif error_code == "E07" or ("battery" in task_lower and ("critical" in task_lower or "swollen" in task_lower)):
+            agent_response = "CRITICAL battery issue. Hardware failure. Recommend wait_hitl for human intervention and battery replacement."
         elif "battery" in task_lower:
-            agent_response = "Battery issue detected. Recommend reboot to reinitialize charge monitoring."
+            agent_response = "Battery issue detected. Recommend cool_down procedure."
         elif "error" in task_lower or "fail" in task_lower:
             agent_response = "General error detected. Recommend wait_hitl for human intervention."
         else:
@@ -206,6 +211,8 @@ class TechnicalSupportAgent(BaseAgent):
         lower_response = agent_response.lower()
         if "clean_wheels" in lower_response:
             solution["action"] = "clean_wheels"
+        elif "cool_down" in lower_response:
+            solution["action"] = "cool_down"
         elif "reboot" in lower_response:
             solution["action"] = "reboot"
         elif "wait_hitl" in lower_response or "escalat" in lower_response:

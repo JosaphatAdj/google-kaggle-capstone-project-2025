@@ -93,7 +93,8 @@ async def poll_solution(robot_id: str) -> Optional[Dict[str, Any]]:
             logger.info(f"✅ MCP Solution polled for {robot_id}")
             return solution
         
-        return None
+        # Return empty dict when no solution (not None, to satisfy FastAPI validation)
+        return {}
         
     except Exception as e:
         logger.error(f"❌ MCP poll_solution failed: {e}")
