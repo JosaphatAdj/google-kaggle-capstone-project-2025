@@ -1,32 +1,3 @@
-"""
-Alert Receiver Agent - Receives and processes robot alerts
-Entry point for robot issues into the multi-agent system
-"""
-
-import asyncio
-from typing import Dict, Any, Optional
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from datetime import datetime
-import logging
-from pathlib import Path
-import sys
-import httpx
-
-# Add root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from agents.base.base_agent import BaseAgent
-from tools.rag.rag_tool import RAGTool
-from communication.message_bus import MessageBus, Message
-from communication.protocols import A2AMessage, ProtocolValidator, MessageType
-from security import AuthManager, AuditLog, ActionType
-
-logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# REQUEST SCHEMAS
 # ============================================================
 
 class SensorData(BaseModel):
