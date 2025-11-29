@@ -66,34 +66,34 @@ DO NOT explain or plan. Just call the tool immediately.
     )
     
     # ========================================
-    # Loop: Repeat until resolved or HITL
+    # STEP 3: Status Checker Agent
     # ========================================
-    support_workflow = LoopAgent(
-        model=Gemini(model="gemini-2.0-flash-lite", retry_options=retry_config),
-        name="support_workflow",
-        description="Loop that re-escalates until problem resolved or HITL required",
+    status_checker = LlmAgent(
+        model=Gemini(model="gemini-2.0-flash-lite", retry_config=retry_config),
+        name="status_checker",
+        description="Checks robot status and decides if loop should continue",
         instruction=f"""
-You manage the support escalation loop for robot {robot_state.robot_id}.
+Check robot status using get_robot_status tool.
 
-Loop logic:
-1. Run escalation_sequence sub-agent (contacts support + executes solution)
-2. Check if robot is waiting for HITL: {robot_state.waiting_for_hitl}
-3. If HITL required: STOP looping (human will intervene)
-4. If NOT HITL:
-   - Wait 5 seconds
-   - Check if error still present
-   - If resolved: STOP looping
-   - If not resolved: CONTINUE (will re-escalate with failure context)
-
-Max 3 iterations (after that, force HITL).
-
-Current iteration: Use get_robot_status tool to check state.
+Report the current status clearly.
+The loop will automatically stop after max iterations or when appropriate.
         """,
-        max_iterations=3,
-        sub_agents=[escalation_sequence],
         tools=[
             FunctionTool(robot_state.get_robot_status)
         ]
+    )
+    
+    # ========================================
+    # Loop: Repeat until resolved or HITL
+    # ========================================
+    support_workflow = LoopAgent(
+        name="support_workflow",
+        description="Loops A2A escalation → execution → verification until resolved or HITL",
+        sub_agents=[
+            escalation_sequence,  # Step 1: Contact support + execute
+            status_checker        # Step 2: Check if should continue
+        ],
+        max_iterations=3
     )
     
     logger.info(f"✅ Support Workflow Agent created (Sequential + Loop)")

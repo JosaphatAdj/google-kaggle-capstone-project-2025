@@ -148,7 +148,7 @@ Just delegate and let it work.
                 self.sensor_agent,
                 self.diagnostic_agent,
                 self.action_agent,
-                self.support_workflow_agent  # ✅ Replaces remote_support_agent
+                self.support_workflow_agent  #  remote_support_agent
             ]
         )
     
