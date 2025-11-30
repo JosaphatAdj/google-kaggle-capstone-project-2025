@@ -75,9 +75,12 @@ DO NOT explain or plan. Just call the tool immediately.
         instruction=f"""
 Check robot status using get_robot_status tool.
 
-Report the current status clearly.
-The loop will automatically stop after max iterations or when appropriate.
-        """,
+Loop should STOP if:
+1. State is OPERATIONAL (error resolved) → Say "STOP: Error resolved"
+2. Waiting HITL is True → Say "STOP: HITL intervention required"
+
+Otherwise say "CONTINUE: Error persists, re-escalating"
+    """,
         tools=[
             FunctionTool(robot_state.get_robot_status)
         ]

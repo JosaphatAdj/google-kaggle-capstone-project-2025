@@ -12,14 +12,11 @@
 - Génération des rapports opérationnels
 
 ## Division Support Technique
-**Agent Routeur de Tickets :** Classification automatique des tickets entrants
 **Agent Répondeur FAQ :** Réponses aux questions simples basées sur RAG
-**Agent Support Technique :** Résolution problèmes avancés (navigation, capteurs, firmware)
+**technical_support_agent :** Résolution problèmes sur le robot (Roues bloquées, température élevée, navigation, capteurs, firmware)
 **Agent Analyse de Sentiment :** Analyse ton, émotion, risque de churn
 **Agent Rapport de Satisfaction :** Génération rapports CSAT, NPS, temps de résolution
 
-## Division Marketing
-5 agents spécialisés : Créateur Contenu, Analyste SEO, Réseaux Sociaux, Campagnes Email, Analytics
 
 ## Division Support Employés  
 5 agents : Assistant RH, Helpdesk IT, Coordinateur Intégration, Recommandation Formation, Communication Interne

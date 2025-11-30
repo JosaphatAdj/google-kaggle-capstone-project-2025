@@ -196,28 +196,28 @@ class TechnicalSupportAgent(BaseAgent):
         
         # Construct a standardized solution object
         solution = {
-            "action": "unknown", # Default
+            "actions": [],
             "error_code": context.get("error_code") if context else "UNKNOWN",
-            "ticket_id": "PENDING", # Should be extracted from tool outputs if possible
+            "ticket_id": "PENDING",
             "agent_id": self.agent_id,
-            "details": {
-                "explanation": agent_response,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            "requires_hitl": False
+            "requires_hitl": False,
+            "is_temporary_solution": False
         }
-        
-        # Simple parsing of response to find action (this could be improved with a specific tool)
+
+        # Simple parsing of response to find actions
         lower_response = agent_response.lower()
         if "clean_wheels" in lower_response:
-            solution["action"] = "clean_wheels"
+            solution["actions"] = ["clean_wheels", "recalibrate_motors"]
         elif "cool_down" in lower_response:
-            solution["action"] = "cool_down"
+            solution["actions"] = ["cool_down", "power_down"]
         elif "reboot" in lower_response:
-            solution["action"] = "reboot"
+            solution["actions"] = ["reboot"]
         elif "wait_hitl" in lower_response or "escalat" in lower_response:
-            solution["action"] = "wait_hitl"
+            solution["actions"] = ["wait_for_hitl"]
             solution["requires_hitl"] = True
+            solution["is_temporary_solution"] = True
+        else:
+            solution["actions"] = ["diagnostic_required"]
             
         return solution
 

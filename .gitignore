@@ -54,6 +54,7 @@ dist/
 htmlcov/
 .pytest_cache/
 test_results/
+*test*
 
 # 🐳 DOCKER
 docker-compose.override.yml

@@ -1,129 +1,224 @@
-# 🚀 RoboNest - Quick Start Guide
+# QUICKSTART - RoboNest System
 
-## Architecture
+Guide de démarrage rapide pour lancer le système RoboNest avec architecture Message Bus.
 
-Le système RoboNest est composé de 3 parties distinctes:
+## 🚀 Lancement Rapide (3 Terminaux)
 
-```
-┌─────────────────────────────────────────┐
-│  INFRASTRUCTURE PRINCIPALE              │
-│  - Alert Receiver (A2A Server)          │
-│  - COO Agent (Coordinateur)             │
-│  - Message Bus                          │
-└─────────────────────────────────────────┘
-              ↕ A2A Protocol
-┌─────────────────────────────────────────┐
-│  ROBOT EMBARQUÉ                         │
-│  - Agents capteurs                      │
-│  - Agent diagnostic                     │
-│  - Support workflow (A2A client)        │
-└─────────────────────────────────────────┘
-              ↕ Simulation
-┌─────────────────────────────────────────┐
-│  CONSOLE SIMULATEUR                     │
-│  - CLI interactive                      │
-│  - Simulation erreurs                   │
-│  - Intervention HITL                    │
-└─────────────────────────────────────────┘
-```
-
-## Lancement du Système
-
-### Option 1: Lancement Séparé (Recommandé pour Debug)
-
-**Terminal 1 - Infrastructure Principale:**
+### Terminal 1 - Système Principal
 ```bash
-python start_system.py
-```
-Ceci lance:
-- Alert Receiver (port 8000)
-- COO Agent
-- Message Bus
-
-**Terminal 2 - Robot:**
-```bash
-python start_robot.py
-```
-Lance le robot embarqué (port 8001)
-
-**Terminal 3 - Simulateur:**
-```bash
-python start_simulator.py
-```
-Lance la console interactive de test
-
-**Avantages:**
-- ✅ Logs séparés et lisibles
-- ✅ Debug facile par composant
-- ✅ Peut redémarrer un composant sans affecter les autres
-
-### Option 2: Lancement Manuel
-
-```bash
-# Terminal 1
-cd agents/alert_receiver
-python alert_receiver_a2a.py
-
-# Terminal 2
-cd agents
-python main.py
-
-# Terminal 3
-cd embedded_robot
-python main_a2a.py
-
-# Terminal 4
-cd embedded_robot
-python simulator_console.py
+cd d:\PROGRAMME PYTHON\robonest-system
+python agents/main.py
 ```
 
-## Vérification
+**Ce qui démarre:**
+- ✅ Message Bus (instance unique partagée)
+- ✅ Alert Receiver (A2A Server sur port 8000)
+- ✅ COO Agent (Orchestrateur)
+- ✅ Technical Support Agent (Résolveur)
 
-Une fois lancé, vérifier:
-
-```bash
-# Agent Card disponible
-curl http://localhost:8000/.well-known/agent-card.json
-
-# Status robot
-curl http://localhost:8001/status
+**Logs attendus:**
 ```
-
-## Tests Rapides
-
-Dans le simulateur (Terminal 3):
-
+🚀 ROBONEST - UNIFIED SYSTEM STARTUP
+📦 Initializing shared infrastructure...
+✅ Shared Message Bus created
+🧠 Starting COO Agent...
+✅ COO Agent operational
+🔧 Starting Technical Support Agent...
+✅ Technical Support Agent operational
+📡 Creating Alert Receiver Agent...
+✅ Alert Receiver Agent created
+🌐 Exposing Alert Receiver via A2A...
+✅ A2A Server configured on port 8000
+✅ UNIFIED SYSTEM OPERATIONAL
 ```
-1  # Simule E01 (roues bloquées) - ré-escalation
-3  # Simule E07 (batterie critique) - HITL immédiat
-s  # Affiche statut complet
-h  # HITL: débloquer roues
-b  # HITL: refroidir batterie
-```
-
-## Arrêt du Système
-
-1. CTRL+C dans le simulateur (Terminal 3)
-2. CTRL+C dans le robot (Terminal 2)
-3. CTRL+C dans l'infrastructure (Terminal 1)
-
-## Troubleshooting
-
-**"Connection refused" sur port 8000:**
-- L'infrastructure principale n'est pas lancée
-- Lancer `start_system.py` d'abord
-
-**"Robot not responding":**
-- Le robot n'est pas lancé
-- Lancer `start_robot.py`
-
-**Logs mélangés:**
-- Assurez-vous d'utiliser des terminaux séparés
-- Ne pas lancer tout depuis `start_system.py`
 
 ---
 
-Pour documentation complète, voir:
-- `README.md` - Documentation système complète
-- `embedded_robot/README.md` - Documentation robot
-- `agents/alert_receiver/README.md` - Documentation Alert Receiver
+### Terminal 2 - Robot Embarqué
+```bash
+python start_robot.py
+```
+
+**Ce qui démarre:**
+- ✅ Robot embarqué avec A2A Client
+- ✅ Connexion à Alert Receiver (localhost:8000)
+- ✅ Simulation de capteurs et états
+
+---
+
+### Terminal 3 - Console Simulateur
+```bash
+python start_simulator.py
+```
+
+**Ce qui démarre:**
+- ✅ Console interactive pour déclencher erreurs
+- ✅ Options: E01-E09, escalations, HITL
+
+---
+
+## 🧪 Test Complet E01 (Roues Bloquées)
+
+1. **Dans Terminal 3 (Simulateur):**
+   ```
+   Entrez le numéro du scénario: 1
+   ```
+
+2. **Logs attendus dans Terminal 1 (Système):**
+   ```
+   [Alert Receiver] 🚨 Processing alert from XR25-001: E01
+   [Alert Receiver] 📤 Forwarding alert to COO
+   [COO Agent] 📋 Nouvelle tâche: ALERT-XR25-001-xxx (robot_alert)
+   [COO Agent] ✅ Agent assigné: technical_support
+   [COO Agent] ✅ Tâche déléguée à tech_support_001
+   [Technical Support] 📥 Received task
+   [Technical Support] 🔧 Processing technical task
+   [Technical Support] ✅ Task completed and published
+   [COO Agent] 📤 Solution forwarded to Alert Receiver
+   [Alert Receiver] 📥 Received solution from COO
+   [Alert Receiver] ✅ Solution queued for XR25-001
+   ```
+
+3. **Logs attendus dans Terminal 2 (Robot):**
+   ```
+   🤖 Polling for solution...
+   ✅ Solution received: {"actions": ["clean_wheels", "recalibrate_motors"], ...}
+   🔄 Executing action: clean_wheels
+   ✅ clean_wheels completed
+   🔄 Executing action: recalibrate_motors
+   ✅ recalibrate_motors completed
+   ✅ All actions completed successfully
+   ```
+
+**Résultat:** ✅ Problème résolu automatiquement
+
+---
+
+## 🔥 Test HITL E07 (Batterie Critique)
+
+1. **Dans Terminal 3 (Simulateur):**
+   ```
+   Entrez le numéro du scénario: 3
+   ```
+
+2. **Comportement attendu:**
+   - Technical Support détecte `requires_hitl=true`
+   - 📧 Email envoyé via Gmail (si configuré)
+   - 🎫 Ticket Jira créé (si configuré)
+   - Actions de sécurité retournées: `["cooldown", "power_down"]`
+
+3. **Logs système:**
+   ```
+   [Technical Support] ⚠️ HITL required for E07
+   [Technical Support] 📧 HITL email sent to support@...
+   [Technical Support] 🎫 Jira ticket created: ROB-XXX
+   ```
+
+---
+
+## ⚙️ Configuration
+
+### Variables d'environnement (`.env`)
+
+**Obligatoire:**
+```env
+GOOGLE_API_KEY=votre_clé_api_gemini
+```
+
+**Optionnel (pour HITL):**
+```env
+# Gmail
+GMAIL_SENDER_EMAIL=robot-system@company.com
+GMAIL_APP_PASSWORD=xxxx_xxxx_xxxx_xxxx
+
+# Jira
+JIRA_SERVER=https://company.atlassian.net
+JIRA_EMAIL=user@company.com
+JIRA_API_TOKEN=votre_token_jira
+JIRA_PROJECT_KEY=ROB
+
+# Ports (optionnel)
+ALERT_RECEIVER_PORT=8000
+ROBOT_PORT=8001
+```
+
+**Copier exemple:**
+```bash
+cp .env.example .env
+# Puis éditer .env avec vos clés
+```
+
+---
+
+## 📊 Architecture
+
+```
+Robot (A2A Client)
+    ↓ HTTP/A2A
+Alert Receiver (A2A Server + LlmAgent)
+    ↓ Message Bus: task.new
+COO Agent (Orchestrateur)
+    ↓ Message Bus: task.assigned.technical_support
+Technical Support Agent (Résolveur)
+    ├─ RAG (Knowledge Base)
+    ├─ Gmail (HITL Notifications)
+    └─ Jira (Ticket Creation)
+    ↓ Message Bus: task.completed
+COO Agent
+    ↓ Message Bus: solution.for_robot
+Alert Receiver
+    ↓ A2A Response
+Robot (Exécute actions)
+```
+
+**Détails:** Voir [docs/diagrams/message_bus_architecture.md](docs/diagrams/message_bus_architecture.md)
+
+---
+
+## 🐛 Troubleshooting
+
+### Problème: "Connection refused" (Robot)
+**Cause:** Alert Receiver n'est pas démarré  
+**Solution:** Vérifier Terminal 1, s'assurer que "A2A Server configured on port 8000" est affiché
+
+### Problème: "No solution received"
+**Cause:** Message Bus ne connecte pas les agents  
+**Solution:** Vérifier que tous les agents sont dans le MÊME processus (agents/main.py)
+
+### Problème: "HITL notifications not sent"
+**Cause:** Variables d'environnement Gmail/Jira manquantes  
+**Solution:** Configurer `.env` avec credentials ou ignorer (système fonctionne sans)
+
+### Problème: "Import error google.adk"
+**Cause:** Dépendances manquantes  
+**Solution:**
+```bash
+pip install google-adk google-generativeai
+```
+
+---
+
+## 📚 Documentation Complète
+
+- **Architecture:** [docs/architecture.md](docs/architecture.md)
+- **Diagrammes:** [docs/diagrams/](docs/diagrams/)
+- **RAG Knowledge Base:** [rag/knowledge_base/products/error_codes/README.md](rag/knowledge_base/products/error_codes/README.md)
+- **API Documentation:** [docs/api_documentation.md](docs/api_documentation.md)
+
+---
+
+## ✅ Checklist Première Utilisation
+
+- [ ] Cloner le projet
+- [ ] Installer dépendances: `pip install -r requirements.txt`
+- [ ] Créer `.env` avec `GOOGLE_API_KEY`
+- [ ] Lancer Terminal 1: `python agents/main.py`
+- [ ] Attendre "✅ UNIFIED SYSTEM OPERATIONAL"
+- [ ] Lancer Terminal 2: `python start_robot.py`
+- [ ] Lancer Terminal 3: `python start_simulator.py`
+- [ ] Tester E01 (option 1 dans simulateur)
+- [ ] Vérifier logs et exécution actions
+
+---
+
+**Système opérationnel ? Testez les autres scénarios E02-E09 !** 🎉

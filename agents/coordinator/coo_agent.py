@@ -388,6 +388,26 @@ class COOAgent(BaseAgent):
         task_info["result"] = payload.get("result")
         
         logger.info(f"✅ Tâche complétée: {task_id} par {task_info['assigned_to']}")
+
+        # Si c'est une tâche robot_alert, forward solution à Alert Receiver
+        if task_info.get("task_data", {}).get("task_type") == "robot_alert":
+            robot_id = task_info.get("task_data", {}).get("robot_id")
+            solution = payload.get("result")
+            
+            if robot_id and solution and self.message_bus:
+                forward_msg = Message(
+                    sender_id=self.agent_id,
+                    topic="solution.for_robot",
+                    payload={
+                        "robot_id": robot_id,
+                        "solution": solution,
+                        "task_id": task_id
+                    },
+                    correlation_id=task_id
+                )
+            
+                await self.message_bus.publish(forward_msg, self.token)
+                logger.info(f"📤 Solution forwarded to Alert Receiver for robot {robot_id}")
         
         # Métriques
         self.performance_metrics["tasks_completed"] += 1

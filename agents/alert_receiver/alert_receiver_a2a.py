@@ -28,8 +28,6 @@ from google.genai import types
 
 # Internal imports
 from tools.rag.rag_tool import RAGTool
-from tools.gmail.gmail_tool import send_escalation_email, get_gmail_tool
-from tools.jira.jira_tool import create_jira_ticket, get_jira_tool
 from communication.message_bus import MessageBus, Message
 from security import AuthManager, AuditLog, ActionType
 
@@ -126,71 +124,6 @@ def classify_error(error_code: str, severity: str, temperature: float = 0.0) -> 
     return f"Urgency: {urgency}. Reason: {reason}"
 
 
-def send_hitl_notifications(
-    robot_id: str,
-    error_code: str,
-    severity: str,
-    description: str,
-    ticket_id: str
-) -> str:
-    """
-    Send HITL notifications via Gmail and create Jira ticket
-    
-    Args:
-        robot_id: Robot identifier
-        error_code: Error code
-        severity: Severity level
-        description: Error description
-        ticket_id: Ticket ID
-    
-    Returns:
-        Notification status message
-    """
-    logger.warning(f"📧 Sending HITL notifications for {robot_id} - {error_code}")
-    
-    results = []
-    
-    # Send Gmail notification
-    try:
-        email_result = send_escalation_email(
-            division="support",
-            issue_data={
-                "robot_id": robot_id,
-                "error_code": error_code,
-                "severity": severity,
-                "description": description,
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            },
-            escalation_type="HITL"
-        )
-        if email_result.get("success"):
-            results.append(f"✅ Email sent to {email_result.get('to')}")
-            logger.warning(f"✅ HITL Email sent")
-        else:
-            results.append(f"⚠️  Email failed: {email_result.get('error')}")
-    except Exception as e:
-        results.append(f"⚠️  Email skipped: {str(e)}")
-        logger.warning(f"⚠️  Gmail skipped: {e}")
-    
-    # Create Jira ticket
-    try:
-        jira_result = create_jira_ticket(
-            summary=f"[HITL] Robot {robot_id} - Error {error_code}",
-            description=f"Robot {robot_id} requires human intervention\\n\\nError: {error_code}\\nSeverity: {severity}\\n\\n{description}",
-            priority="Critical" if severity == "critical" else "High",
-            labels=["HITL", "robot", error_code]
-        )
-        if jira_result.get("success"):
-            results.append(f"✅ Jira ticket: {jira_result.get('ticket_key')}")
-            logger.warning(f"✅ HITL Jira: {jira_result.get('ticket_key')}")
-        else:
-            results.append(f"⚠️  Jira failed: {jira_result.get('error')}")
-    except Exception as e:
-        results.append(f"⚠️  Jira skipped: {str(e)}")
-        logger.warning(f"⚠️  Jira skipped: {e}")
-    
-    return "; ".join(results)
-
 
 async def process_robot_alert(
     robot_id: str,
@@ -263,6 +196,7 @@ async def process_robot_alert(
             # NOTE: This is synchronous for tool compatibility
             # In production, use asyncio.create_task or similar
             logger.info(f"📤 Forwarding alert to COO: {task_id}")
+            await alert_state.message_bus.publish(message, alert_state.token)
         
         # Audit log
         alert_state.audit_log.log_action(
@@ -367,39 +301,24 @@ def create_alert_receiver_agent(retry_config: types.HttpRetryOptions) -> LlmAgen
         instruction="""
 You are the Alert Receiver Agent for the RoboNest system.
 
-CRITICAL: Always respond with VALID JSON in this exact format:
+When robot sends alert, extract robot_id from message:
+- Look for: "Robot XR25-001", "robot_id: XR25-001"  
+
+Then:
+1. query_error_code - Get error info from RAG
+2. classify_error - Determine urgency
+3. process_robot_alert - Forward to COO (use extracted robot_id)
+
+Return JSON:
 {
-  "actions": ["action1", "action2",...,"actionN"],
-  "requires_hitl": true/false,
-  "is_temporary_solution": true/false,
-  "ticket_id": "ALERT-ROBOTID-TIMESTAMP",
-  "error_code": "E01"
+  "status": "received",
+  "task_id": "ALERT-xxx",
+  "message": "Alert forwarded to support"
 }
-
-Error handling rules:
-- E07/E08/E09 or temp>60°C → requires_hitl=true, is_temporary_solution=true
-- E01 (wheels blocked) → actions: ["clean_wheels", "recalibrate_motors"], requires_hitl=false
-- E02 (navigation) → actions: ["reset_navigation", "reboot_sensors"], requires_hitl=false
-- E03 (charging) → actions: ["clean_charging_port"], requires_hitl=false
-
-If message contains "ESCALATION ALERT" (1st failure):
-- Provide DIFFERENT actions than mentioned as failed
-- Keep requires_hitl=false unless critical error 
-
-If message contains "CRITICAL ESCALATION" (2nd failure):
-- MANDATORY: requires_hitl=true, is_temporary_solution=true
-- Provide safety actions only
-
-When requires_hitl=true, use send_hitl_notifications tool to send notifications to COO and Tech Support.
-
-Examples:
-E01 normal: {"actions": ["clean_wheels", "recalibrate_motors"], "requires_hitl": false, "is_temporary_solution": false, "ticket_id": "ALERT-XR25-001-123", "error_code": "E01"}
-E07 critical: {"actions": ["cooldown", "power_down"], "requires_hitl": true, "is_temporary_solution": true, "ticket_id": "ALERT-XR25-001-124", "error_code": "E07"}
-        """,
+""",
         tools=[
             FunctionTool(query_error_code),
             FunctionTool(classify_error),
-            FunctionTool(send_hitl_notifications),
             FunctionTool(process_robot_alert),
             FunctionTool(provide_solution),
             FunctionTool(get_pending_solution),
@@ -431,6 +350,27 @@ async def initialize_infrastructure():
         agent_id="alert_receiver_001",
         agent_type="alert_receiver",
         department="support"
+    )
+
+    def handle_solution_from_coo(message: Message):
+        """Handler for solutions from COO"""
+        payload = message.payload
+        robot_id = payload.get("robot_id")
+        solution = payload.get("solution")
+        task_id = payload.get("task_id")
+        
+        logger.info(f"📥 Received solution from COO for robot {robot_id}")
+        
+        # Store solution in queue for robot to retrieve via A2A
+        if robot_id and solution:
+            alert_state.solution_queue[robot_id] = solution
+            logger.info(f"✅ Solution queued for {robot_id}")
+    
+    alert_state.message_bus.subscribe(
+        topic="solution.for_robot",
+        agent_id="alert_receiver_001",
+        token=alert_state.token,
+        handler=handle_solution_from_coo
     )
     
     logger.info("✅ Infrastructure initialized")

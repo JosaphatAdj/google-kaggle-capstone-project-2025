@@ -42,7 +42,7 @@ class CoordinatorTools:
         
         Args:
             task_description: Description de la tâche
-            task_type: Type (technical_support, faq, content_creation, etc.)
+            task_type: Type (technical_support, faq etc.)
             urgency: Niveau d'urgence (low, normal, high, critical)
             context: Contexte additionnel
         
