@@ -1,43 +1,219 @@
 {
     "error_codes": {
         "E01": {
-            "description": "Wheels blocked",
+            "description": "Wheels blocked - Robot cannot move",
             "causes": [
-                "Hair",
-                "obstacle"
+                "Hair or fibers wrapped around wheels",
+                "Physical obstacle blocking movement",
+                "Wheel motor malfunction",
+                "Debris in wheel assembly"
             ],
-            "resolution": "Clean wheels, restart",
-            "urgency": "medium",
+            "resolution": "Clean wheels, remove obstacles, recalibrate motors",
+            "actions": [
+                "clean_wheels",
+                "recalibrate_motors",
+                "reverse_motors",
+                "inspect_wheels",
+                "power_cycle_motors",
+                "lubricate_wheels"
+            ],
+            "urgency": "high",
+            "requires_hitl": false,
             "models": [
                 "XR25",
                 "XR30"
             ]
         },
         "E02": {
-            "description": "Main brush blockage",
+            "description": "Navigation system failure",
             "causes": [
-                "Fibers",
-                "thick carpet"
+                "Sensor malfunction",
+                "GPS/LIDAR failure",
+                "Mapping data corrupted",
+                "Software glitch"
             ],
-            "resolution": "Remove and clean brush",
-            "urgency": "low",
+            "resolution": "Reset navigation system, reboot sensors, recalibrate",
+            "actions": [
+                "reset_navigation",
+                "reboot_sensors",
+                "recalibrate_positioning",
+                "clear_map_cache"
+            ],
+            "urgency": "high",
+            "requires_hitl": false,
             "models": [
                 "XR25",
                 "XR30"
             ]
         },
         "E03": {
-            "description": "Anti-drop sensor defective",
+            "description": "Battery low - Needs charging",
             "causes": [
-                "Dust",
-                "obstructed IR"
+                "Battery depleted",
+                "Charging port dirty",
+                "Power cable issue",
+                "Battery degradation"
             ],
-            "resolution": "Clean sensors, restart",
-            "urgency": "high",
+            "resolution": "Return to charging station, clean charging port",
+            "actions": [
+                "charge_battery",
+                "clean_charging_port",
+                "check_power_cable",
+                "return_to_dock"
+            ],
+            "urgency": "medium",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E04": {
+            "description": "Software glitch - General malfunction",
+            "causes": [
+                "Memory overflow",
+                "Process deadlock",
+                "Unexpected exception",
+                "Corrupted state"
+            ],
+            "resolution": "Restart service, reboot system, clear cache",
+            "actions": [
+                "restart_service",
+                "reboot",
+                "clear_cache",
+                "reset_to_defaults"
+            ],
+            "urgency": "medium",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E05": {
+            "description": "Performance degraded",
+            "causes": [
+                "High CPU usage",
+                "Memory leak",
+                "Thermal throttling",
+                "Resource contention"
+            ],
+            "resolution": "Optimize processes, clear cache, restart",
+            "actions": [
+                "clear_cache",
+                "restart_service",
+                "optimize_memory",
+                "reboot"
+            ],
+            "urgency": "low",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E06": {
+            "description": "Communication error",
+            "causes": [
+                "WiFi connection lost",
+                "Network timeout",
+                "Server unreachable",
+                "Protocol error"
+            ],
+            "resolution": "Reconnect to network, check WiFi, restart communication module",
+            "actions": [
+                "reconnect_wifi",
+                "reset_network",
+                "restart_comm_module",
+                "check_network_settings"
+            ],
+            "urgency": "medium",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E07": {
+            "description": "Battery critical - Swollen battery (HITL REQUIRED)",
+            "causes": [
+                "Battery overheating (>60°C)",
+                "Cell swelling",
+                "Thermal runaway risk",
+                "Physical damage to battery"
+            ],
+            "resolution": "IMMEDIATE SHUTDOWN - Human intervention required",
+            "actions": [
+                "cooldown",
+                "power_down",
+                "emergency_shutdown",
+                "isolate_robot"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "FIRE HAZARD - Do not attempt automatic resolution",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E08": {
+            "description": "Firmware corruption (HITL REQUIRED)",
+            "causes": [
+                "Failed firmware update",
+                "Flash memory corruption",
+                "Power loss during update",
+                "Malicious code injection"
+            ],
+            "resolution": "Manual firmware reflash required - Contact tech support",
+            "actions": [
+                "safe_mode_boot",
+                "diagnostic_mode",
+                "wait_for_hitl"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "Robot may behave unpredictably - Keep under supervision",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E09": {
+            "description": "Safety sensor failure (HITL REQUIRED)",
+            "causes": [
+                "Drop sensor malfunction",
+                "Collision sensor failure",
+                "Emergency stop button stuck",
+                "Safety circuit broken"
+            ],
+            "resolution": "Immediate halt - Manual inspection required",
+            "actions": [
+                "emergency_stop",
+                "disable_movement",
+                "wait_for_hitl",
+                "safety_diagnostic"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "Robot cannot operate safely - Risk of damage or injury",
             "models": [
                 "XR25",
                 "XR30"
             ]
         }
+    },
+    "metadata": {
+        "version": "2.0",
+        "last_updated": "2025-11-29",
+        "language": "en",
+        "system": "RoboNest A2A Multi-Agent System",
+        "total_errors": 9,
+        "critical_errors": [
+            "E07",
+            "E08",
+            "E09"
+        ],
+        "description": "Comprehensive error code database for robot support system with A2A protocol integration"
     }
 }

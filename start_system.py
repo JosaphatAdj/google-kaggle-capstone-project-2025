@@ -1,172 +1,115 @@
-#!/usr/bin/env python3
 """
-Point d'entrée pour lancer tout le système RoboNest
-Lance: MessageBus, COO Agent, AlertReceiverAgent (MCP Server), TechnicalSupportAgent
+RoboNest System Launcher
+Launches core infrastructure: Message Bus, COO Agent, Alert Receiver
+Robot and simulator should be launched separately in their own terminals
 """
-
-import asyncio
+import subprocess
 import sys
-import logging
+import time
 from pathlib import Path
+import os
 
-# Ajouter root au path
-sys.path.insert(0, str(Path(__file__).parent))
+def print_banner(text, char="="):
+    """Print a formatted banner"""
+    print(f"\n{char * 70}")
+    print(f"  {text}")
+    print(f"{char * 70}")
 
-from agents.coordinator.coo_agent import COOAgent
-from agents.alert_receiver.alert_receiver_agent import AlertReceiverAgent
-from agents.support.technical_support_agent import TechnicalSupportAgent
-from security import AuthManager, AuditLog
-from communication.message_bus import MessageBus
+def check_env():
+    """Check if .env file exists and has GOOGLE_API_KEY"""
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        print("\n⚠️  WARNING: .env file not found!")
+        print("   Create .env file with: GOOGLE_API_KEY=your_key_here")
+        response = input("\n   Continue anyway? (y/n): ")
+        if response.lower() != 'y':
+            sys.exit(1)
+    return True
 
-# Configuration logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-
-class RoboNestSystem:
-    """Système complet RoboNest"""
+def main():
+    """Main launcher for core infrastructure"""
+    os.system('cls' if os.name == 'nt' else 'clear')
     
-    def __init__(self):
-        """Initialise le système"""
-        logger.info("🚀 Initialisation du système RoboNest...")
-        
-        # Infrastructure
-        self.auth = AuthManager()
-        self.audit = AuditLog(log_dir="logs/system")
-        self.bus = MessageBus(self.auth, self.audit)
-        
-        # Agents
-        self.alert_receiver = None
-        self.coo = None
-        self.tech_support = None
-        
-        logger.info("✅ Infrastructure initialisée")
+    print_banner("🚀 ROBONEST A2A SYSTEM - CORE INFRASTRUCTURE", "=")
     
-    async def start(self):
-        """Démarre tous les agents"""
-        logger.info("🎬 Démarrage du système...")
-        
-        # 1. Démarrer Message Bus
-        await self.bus.start()
-        logger.info("✅ Message Bus démarré")
-        
-        # 2. Alert Receiver Agent (MCP Server)
-        self.alert_receiver = AlertReceiverAgent(
-            agent_id="alert_receiver_001",
-            auth_manager=self.auth,
-            audit_log=self.audit,
-            message_bus=self.bus
-        )
-        await self.alert_receiver.start()
-        logger.info("✅ Alert Receiver Agent démarré (MCP Server)")
-        
-        # 3. COO Agent
-        self.coo = COOAgent(
-            agent_id="coo_agent_001",
-            auth_manager=self.auth,
-            audit_log=self.audit,
-            message_bus=self.bus
-        )
-        await self.coo.start()
-        logger.info("✅ COO Agent démarré")
-        
-        # 4. Technical Support Agent
-        self.tech_support = TechnicalSupportAgent(
-            agent_id="tech_support_001",
-            auth_manager=self.auth,
-            message_bus=self.bus
-        )
-        await self.tech_support.start()
-        logger.info("✅ Technical Support Agent démarré")
-        
-        logger.info("\n" + "="*60)
-        logger.info("🎉 SYSTÈME ROBONEST OPÉRATIONNEL")
-        logger.info("="*60)
-        logger.info("Les agents sont prêts à recevoir des alertes")
-        
-        # 5. Start MCP HTTP Server for robot connections
-        logger.info("🌐 Démarrage du serveur MCP HTTP sur port 8001...")
-        await self._start_mcp_server()
-        
-        logger.info("Lancez le robot séparément avec:")
-        logger.info("  python embedded_robot/robot_agent.py")
-        logger.info("="*60 + "\n")
+    # Check environment
+    check_env()
     
-    async def _start_mcp_server(self):
-        """Start MCP HTTP server for robot connections"""
-        import uvicorn
-        from agents.alert_receiver import mcp_server
-        
-        # Set the global agent reference in MCP server
-        mcp_server.set_agent(self.alert_receiver)
-        
-        # Configure uvicorn
-        config = uvicorn.Config(
-            mcp_server.app,
-            host="0.0.0.0",
-            port=8001,
-            log_level="info"
-        )
-        server = uvicorn.Server(config)
-        
-        # Run in background task
-        self.mcp_server_task = asyncio.create_task(server.serve())
-        
-        # Wait a bit for server to start
-        await asyncio.sleep(1)
-        logger.info("✅ MCP HTTP Server démarré sur http://localhost:8001")
+    project_root = Path(__file__).parent
+    processes = []
     
-    async def run_forever(self):
-        """Garde le système en cours d'exécution"""
-        try:
-            # Boucle infinie d'attente
-            while True:
-                await asyncio.sleep(10)
-                
-                # Optionnel: afficher des stats périodiquement
-                if hasattr(self.coo, 'get_performance_report'):
-                    report = self.coo.get_performance_report()
-                    logger.info(f"📊 Tâches actives: {report['active_tasks']}, "
-                              f"Déléguées: {report['metrics']['tasks_delegated']}, "
-                              f"Complétées: {report['metrics']['tasks_completed']}")
-        
-        except KeyboardInterrupt:
-            logger.info("\n⚠️ Interruption détectée (Ctrl+C)")
-    
-    async def stop(self):
-        """Arrête le système proprement"""
-        logger.info("🛑 Arrêt du système...")
-        
-        if self.bus:
-            await self.bus.stop()
-        
-        logger.info("✅ Système arrêté proprement")
-
-
-async def main():
-    """Point d'entrée principal"""
-    
-    print("\n" + "="*80)
-    print(" " * 25 + "🤖 ROBONEST SYSTEM 🤖")
-    print("="*80)
-    print()
-    
-    # Créer et démarrer le système
-    system = RoboNestSystem()
-    await system.start()
-    
-    # Garder le système actif
     try:
-        await system.run_forever()
+        # 1. Alert Receiver (A2A Server)
+        print("\n📡 Starting Alert Receiver (port 8000)...")
+        alert_receiver = subprocess.Popen(
+            [sys.executable, "agents/alert_receiver/alert_receiver_a2a.py"],
+            cwd=project_root
+        )
+        processes.append(("Alert Receiver", alert_receiver))
+        print("   ✅ Alert Receiver started")
+        time.sleep(3)
+        
+        # 2. Main System (COO + Message Bus)
+        print("\n🧠 Starting Main System (COO Agent + Message Bus)...")
+        main_system = subprocess.Popen(
+            [sys.executable, "agents/main.py"],
+            cwd=project_root
+        )
+        processes.append(("Main System", main_system))
+        print("   ✅ Main System started")
+        time.sleep(3)
+        
+        # 3. Show status
+        print_banner("✅ CORE INFRASTRUCTURE RUNNING", "=")
+        print("\n📍 Services:")
+        print("   ✅ Alert Receiver (A2A):  http://localhost:8000")
+        print("   ✅ Agent Card:             http://localhost:8000/.well-known/agent-card.json")
+        print("   ✅ Main System (COO):      Running")
+        print("   ✅ Message Bus:            Running")
+        
+        print("\n📚 Next Steps:")
+        print("\n   🤖 Start Robot (in separate terminal):")
+        print("      python start_robot.py")
+        
+        print("\n   🎮 Start Simulator Console (in separate terminal):")
+        print("      python start_simulator.py")
+        
+        print("\n   OR manually:")
+        print("      Terminal 2: cd embedded_robot && python main_a2a.py")
+        print("      Terminal 3: cd embedded_robot && python simulator_console.py")
+        
+        print_banner("Press CTRL+C to stop core infrastructure", "=")
+        
+        # Keep running
+        while True:
+            time.sleep(1)
+            # Check if processes are still alive
+            for name, process in processes:
+                if process.poll() is not None:
+                    print(f"\n⚠️  {name} stopped unexpectedly!")
+                    raise Exception(f"{name} crashed")
+    
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Keyboard interrupt received")
+    
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+    
     finally:
-        await system.stop()
+        # Cleanup
+        print("\n🛑 Shutting down core infrastructure...")
+        for name, process in processes:
+            print(f"   Stopping {name}...")
+            process.terminate()
+            try:
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                print(f"   Force killing {name}...")
+                process.kill()
+        
+        print("\n✅ Core infrastructure stopped")
+        print("👋 Goodbye!\n")
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\n👋 Au revoir!")
+    main()

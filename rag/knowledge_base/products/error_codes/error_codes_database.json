@@ -1,55 +1,219 @@
 {
     "error_codes": {
         "E01": {
-            "description": "Roues bloquées",
+            "description": "Roues bloquées - Robot ne peut pas se déplacer",
             "causes": [
-                "Cheveux",
-                "obstacle"
+                "Cheveux ou fibres enroulés autour des roues",
+                "Obstacle physique bloquant le mouvement",
+                "Dysfonctionnement du moteur de roue",
+                "Débris dans l'assemblage des roues"
             ],
-            "resolution": "Nettoyer les roues, redémarrer",
-            "urgency": "medium",
+            "resolution": "Nettoyer les roues, retirer les obstacles, recalibrer les moteurs",
+            "actions": [
+                "clean_wheels",
+                "recalibrate_motors",
+                "reverse_motors",
+                "inspect_wheels",
+                "power_cycle_motors",
+                "lubricate_wheels"
+            ],
+            "urgency": "high",
+            "requires_hitl": false,
             "models": [
                 "XR25",
                 "XR30"
             ]
         },
         "E02": {
-            "description": "Blocage brosse principale",
+            "description": "Échec du système de navigation",
             "causes": [
-                "Fibres",
-                "tapis épais"
+                "Dysfonctionnement du capteur",
+                "Panne GPS/LIDAR",
+                "Données de cartographie corrompues",
+                "Bug logiciel"
             ],
-            "resolution": "Retirer la brosse et nettoyer",
-            "urgency": "low",
+            "resolution": "Réinitialiser le système de navigation, redémarrer les capteurs",
+            "actions": [
+                "reset_navigation",
+                "reboot_sensors",
+                "recalibrate_positioning",
+                "clear_map_cache"
+            ],
+            "urgency": "high",
+            "requires_hitl": false,
             "models": [
                 "XR25",
                 "XR30"
             ]
         },
         "E03": {
-            "description": "Capteur anti-chute défectueux",
+            "description": "Batterie faible - Nécessite recharge",
             "causes": [
-                "Poussière",
-                "IR obstrué"
+                "Batterie épuisée",
+                "Port de charge sale",
+                "Problème de câble d'alimentation",
+                "Dégradation de la batterie"
             ],
-            "resolution": "Nettoyer capteurs, redémarrer",
-            "urgency": "high",
+            "resolution": "Retour à la station de charge, nettoyer le port de charge",
+            "actions": [
+                "charge_battery",
+                "clean_charging_port",
+                "check_power_cable",
+                "return_to_dock"
+            ],
+            "urgency": "medium",
+            "requires_hitl": false,
             "models": [
                 "XR25",
                 "XR30"
             ]
         },
-        "L01": {
-            "description": "Lames bloquées",
+        "E04": {
+            "description": "Bug logiciel - Dysfonctionnement général",
             "causes": [
-                "Herbes emmêlées"
+                "Débordement de mémoire",
+                "Blocage de processus",
+                "Exception inattendue",
+                "État corrompu"
             ],
-            "resolution": "Retirer herbes, nettoyer",
+            "resolution": "Redémarrer le service, redémarrer le système, vider le cache",
+            "actions": [
+                "restart_service",
+                "reboot",
+                "clear_cache",
+                "reset_to_defaults"
+            ],
             "urgency": "medium",
+            "requires_hitl": false,
             "models": [
-                "LawnBot S",
-                "LawnBot Max"
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E05": {
+            "description": "Performance dégradée",
+            "causes": [
+                "Utilisation élevée du CPU",
+                "Fuite mémoire",
+                "Limitation thermique",
+                "Contention des ressources"
+            ],
+            "resolution": "Optimiser les processus, vider le cache, redémarrer",
+            "actions": [
+                "clear_cache",
+                "restart_service",
+                "optimize_memory",
+                "reboot"
+            ],
+            "urgency": "low",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E06": {
+            "description": "Erreur de communication",
+            "causes": [
+                "Connexion WiFi perdue",
+                "Timeout réseau",
+                "Serveur inaccessible",
+                "Erreur de protocole"
+            ],
+            "resolution": "Reconnexion au réseau, vérifier WiFi, redémarrer module communication",
+            "actions": [
+                "reconnect_wifi",
+                "reset_network",
+                "restart_comm_module",
+                "check_network_settings"
+            ],
+            "urgency": "medium",
+            "requires_hitl": false,
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E07": {
+            "description": "Batterie critique - Batterie gonflée (HITL REQUIS)",
+            "causes": [
+                "Surchauffe de la batterie (>60°C)",
+                "Gonflement des cellules",
+                "Risque d'emballement thermique",
+                "Dommage physique à la batterie"
+            ],
+            "resolution": "ARRÊT IMMÉDIAT - Intervention humaine requise",
+            "actions": [
+                "cooldown",
+                "power_down",
+                "emergency_shutdown",
+                "isolate_robot"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "RISQUE D'INCENDIE - Ne pas tenter de résolution automatique",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E08": {
+            "description": "Corruption du firmware (HITL REQUIS)",
+            "causes": [
+                "Échec de mise à jour firmware",
+                "Corruption de la mémoire flash",
+                "Perte d'alimentation pendant mise à jour",
+                "Injection de code malveillant"
+            ],
+            "resolution": "Reflash manuel du firmware requis - Contacter support technique",
+            "actions": [
+                "safe_mode_boot",
+                "diagnostic_mode",
+                "wait_for_hitl"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "Le robot peut se comporter de manière imprévisible - Garder sous surveillance",
+            "models": [
+                "XR25",
+                "XR30"
+            ]
+        },
+        "E09": {
+            "description": "Défaillance des capteurs de sécurité (HITL REQUIS)",
+            "causes": [
+                "Dysfonctionnement du capteur de chute",
+                "Panne du capteur de collision",
+                "Bouton d'arrêt d'urgence bloqué",
+                "Circuit de sécurité rompu"
+            ],
+            "resolution": "Arrêt immédiat - Inspection manuelle requise",
+            "actions": [
+                "emergency_stop",
+                "disable_movement",
+                "wait_for_hitl",
+                "safety_diagnostic"
+            ],
+            "urgency": "critical",
+            "requires_hitl": true,
+            "safety_warning": "Le robot ne peut pas fonctionner en toute sécurité - Risque de dommage ou blessure",
+            "models": [
+                "XR25",
+                "XR30"
             ]
         }
+    },
+    "metadata": {
+        "version": "2.0",
+        "last_updated": "2025-11-29",
+        "language": "fr",
+        "system": "RoboNest A2A Système Multi-Agents",
+        "total_errors": 9,
+        "critical_errors": [
+            "E07",
+            "E08",
+            "E09"
+        ],
+        "description": "Base de données complète des codes d'erreur pour système de support robot avec intégration protocole A2A"
     }
 }
