@@ -71,6 +71,14 @@ RoboNest is an intelligent multi-agent system designed to autonomously manage an
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### End-to-End Workflow
+
+Complete workflow from error detection (E03) to automated resolution:
+
+![E2E Workflow Diagram](docs/workflow.png)
+
+*Figure: 7-phase workflow showing robot error detection, A2A communication, backend processing, and solution execution. Each phase is color-coded for clarity.*
+
 ---
 
 ## 🚀 Quick Start
