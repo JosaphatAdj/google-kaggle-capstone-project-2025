@@ -3,6 +3,7 @@ Gmail Tool - Email notifications for HITL escalations
 Integrated with RoboNest multi-agent system
 """
 
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -11,6 +12,8 @@ import logging
 from pathlib import Path
 import sys
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 # Add root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -38,14 +41,7 @@ class GmailTool:
         )
     """
     
-    # Division email mapping
-    DIVISION_EMAILS = {
-        "support": "josaphatadjele1@gmail.com",
-        "marketing": "adjeledev@gmail.com",
-        "hr": "adjeledev@gmail.com",
-        "coordinator": "adjeledev@gmail.com",
-        "ops": "adjeledev@gmail.com"
-    }
+    DIVISION_EMAILS = os.getenv("DIVISION_EMAILS", "")
     
     def __init__(
         self,
@@ -74,10 +70,7 @@ class GmailTool:
             Use App Password, not regular password!
             https://support.google.com/accounts/answer/185833
         """
-        # Load from environment
-        import os
-        from dotenv import load_dotenv
-        load_dotenv()
+        
         
         self.smtp_server = smtp_server or os.getenv("GMAIL_SMTP_SERVER", "smtp.gmail.com")
         self.smtp_port = smtp_port or int(os.getenv("GMAIL_SMTP_PORT", "587"))
