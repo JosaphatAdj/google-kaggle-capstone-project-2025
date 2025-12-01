@@ -189,6 +189,9 @@ class HardwareSimulator:
         if not self.error_persistent:
             self.temperature = 35.0
             self.current_error = None
+
+        self.temperature = 35.0 #we reset the temperature to normal anyway
+        self.current_error = None
         
         return {
             "status": "success",

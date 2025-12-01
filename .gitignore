@@ -1,65 +1,123 @@
-# 🔐 SECRETS & CONFIGURATIONS SENSIBLES
-*.env
-config/secrets.yaml
-config/api_keys.json
-keys/
-certificates/
-*.pem
-*.key
-*.crt
+# ============================================================
+# RoboNest - Python Multi-Agent System
+# .gitignore for Google Capstone Submission
+# ============================================================
 
-# 🗄️ BASE DE DONNÉES & VECTOR STORE
-chroma_db/
-rag/vector_db/chroma_db/
-rag/vector_db/embeddings_cache/
+# ===== SENSITIVE CREDENTIALS (CRITICAL - DO NOT COMMIT) =====
+.env
+.env.local
+.env.production
+*.key
+*.pem
+credentials.json
+token.json
+gmail_credentials.json
+jira_credentials.json
+
+# ===== Python Cache & Compiled Files =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Virtual Environments =====
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# ===== IDE & Editor Files =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Logs & Debugging =====
+*.log
+logs/
+*.log.*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===== Testing & Coverage =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+pytest_debug.log
+zzz/
+
+# ===== Database & Storage =====
+# ChromaDB - INCLUDED for direct deployment (uncomment to exclude)
+# rag/chroma_db/
+# chroma_data/
+# vector_store/
+
+# Other databases (still excluded)
 *.db
 *.sqlite
 *.sqlite3
 
-# 📝 LOGS
-logs/
-*.log
-agent_logs/
-system_logs/
+# ===== Jupyter Notebooks (if any) =====
+.ipynb_checkpoints/
+*.ipynb
 
-# 💾 DONNÉES TEMPORAIRES & CACHE
-data/
-cache/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-pip-log.txt
-zzz/
+# ===== Google ADK Specific =====
+.adk_cache/
+agent_sessions/
+.agent_memory/
 
-# 🔧 ENVIRONNEMENTS VIRTUELS & IDE
-venv/
-env/
-.venv/
-.idea/
-.vscode/
-*.swp
-*.swo
+# ===== Jira & Email Artifacts =====
+jira_cache/
+email_cache/
+attachments/
 
-# 📦 PAQUETS & INSTALLATIONS
-node_modules/
-build/
-dist/
-*.egg-info/
-.installed.cfg
+# ===== Temporary Files =====
+*.tmp
+*.temp
+*.bak
+*.backup
+.cache/
 
-# 🧪 TESTS & COUVERTURE
-.coverage
-htmlcov/
-.pytest_cache/
-test_results/
-*test*
+# ===== OS Generated Files =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
 
-# 🐳 DOCKER
-docker-compose.override.yml
-.dockerignore
 
-# 📊 MÉTRIQUES & BACKUPS
-backups/
-metrics/export/
+
+
+# ===== Keep These Files =====
+!.gitkeep
+!.env.example
+
+

@@ -169,56 +169,74 @@ class TechnicalSupportAgent(BaseAgent):
 
     async def process_task(self, task_description: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Process a technical support task/alert
+        Process a technical support task/alert using ERROR_SOLUTIONS mapping
         """
         logger.info(f"🔧 Processing technical task: {task_description}")
         
-        # Simple rule-based response for testing (LlmAgent.run() doesn't exist)
-        # In production, this would call the LLM via generate_content or similar
-        task_lower = task_description.lower()
-        error_code = context.get("error_code") if context else None
+        # Import mapping
+        from agents.support.error_solutions import get_solution_for_error, ERROR_SOLUTIONS
         
-        # Determine action based on error code
-        if error_code == "E01" or ("wheel" in task_lower and "block" in task_lower):
-            agent_response = "Wheels obstructed. Recommend clean_wheels procedure."
-        elif error_code == "E07" or ("battery" in task_lower and ("critical" in task_lower or "swollen" in task_lower)):
-            agent_response = "CRITICAL battery issue. Hardware failure. Recommend wait_hitl for human intervention and battery replacement."
-        elif "battery" in task_lower:
-            agent_response = "Battery issue detected. Recommend cool_down procedure."
-        elif "error" in task_lower or "fail" in task_lower:
-            agent_response = "General error detected. Recommend wait_hitl for human intervention."
-        else:
-            agent_response = f"Analyzed task: {task_description}. Further investigation required."
+        error_code = context.get("error_code") if context else "UNKNOWN"
+        robot_id = context.get("robot_id") if context else "UNKNOWN"
         
-        # Extract structured solution from agent response or context
-        # For now, we assume the agent's text response contains the solution explanation
-        # In a real system, we might want the agent to return a structured object via a tool
+        # Get predefined solution from mapping (deterministic)
+        solution_template = get_solution_for_error(error_code)
         
-        # Construct a standardized solution object
+        # Construct full solution object
         solution = {
-            "actions": [],
-            "error_code": context.get("error_code") if context else "UNKNOWN",
-            "ticket_id": "PENDING",
+            "actions": solution_template["actions"],
+            "error_code": error_code,
+            "ticket_id": "PENDING",  # Will be updated after Jira creation
             "agent_id": self.agent_id,
-            "requires_hitl": False,
-            "is_temporary_solution": False
+            "requires_hitl": solution_template["requires_hitl"],
+            "is_temporary_solution": solution_template["is_temporary_solution"]
         }
-
-        # Simple parsing of response to find actions
-        lower_response = agent_response.lower()
-        if "clean_wheels" in lower_response:
-            solution["actions"] = ["clean_wheels", "recalibrate_motors"]
-        elif "cool_down" in lower_response:
-            solution["actions"] = ["cool_down", "power_down"]
-        elif "reboot" in lower_response:
-            solution["actions"] = ["reboot"]
-        elif "wait_hitl" in lower_response or "escalat" in lower_response:
-            solution["actions"] = ["wait_for_hitl"]
-            solution["requires_hitl"] = True
-            solution["is_temporary_solution"] = True
-        else:
-            solution["actions"] = ["diagnostic_required"]
+        
+        # Log solution determination
+        logger.info(f"📋 Solution for {error_code}: {solution['actions']} (HITL={solution['requires_hitl']})")
+        
+        # Create Jira ticket for tracking
+        try:
+            priority = "Critical" if solution["requires_hitl"] else "High"
+            jira_result = create_jira_ticket(
+                summary=f"Robot {robot_id} - Error {error_code}",
+                description=f"**Robot:** {robot_id}\\n**Error:** {error_code}\\n**Description:** {solution_template['description']}\\n**Actions:** {', '.join(solution['actions'])}",
+                priority=priority,
+                labels=["robot", error_code, robot_id]
+            )
             
+            if jira_result.get("success"):
+                solution["ticket_id"] = jira_result.get("ticket_key", "UNKNOWN")
+                logger.info(f"🎫 Jira ticket created: {solution['ticket_id']}")
+            else:
+                logger.warning(f"⚠️ Jira ticket creation failed: {jira_result.get('error')}")
+        except Exception as e:
+            logger.warning(f"⚠️ Jira skipped: {e}")
+        
+        # If HITL required, send escalation email
+        if solution["requires_hitl"]:
+            try:
+                email_result = send_escalation_email(
+                    division="support",
+                    issue_data={
+                        "robot_id": robot_id,
+                        "error_code": error_code,
+                        "severity": "critical",
+                        "description": solution_template['description'],
+                        "actions_taken": solution["actions"]
+                    },
+                    escalation_type="HITL"
+                )
+                
+                if email_result.get("success"):
+                    logger.warning(f"📧 HITL email sent to {email_result.get('to')}")
+                else:
+                    logger.warning(f"⚠️ HITL email failed: {email_result.get('error')}")
+            except Exception as e:
+                logger.warning(f"⚠️ Email skipped: {e}")
+        
+        logger.info(f"✅ Solution determined: {solution['actions']}, HITL={solution['requires_hitl']}, Ticket={solution['ticket_id']}")
+        
         return solution
 
     def analyze_issue(self, error_code: str, diagnostics: Dict[str, Any]) -> Dict[str, Any]:

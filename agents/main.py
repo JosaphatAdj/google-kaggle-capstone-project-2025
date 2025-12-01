@@ -1,12 +1,20 @@
 """
-Main System - Single entry point for entire system
-Creates: Message Bus + COO + Technical Support + Alert Receiver (A2A)
+Main entry point for RoboNest system - Unified startup
+Starts Alert Receiver (A2A), COO Agent, and Technical Support Agent
 """
+
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
+# Suppress Google ADK warnings
+import warnings
+warnings.filterwarnings('ignore', message='.*EXPERIMENTAL.*')
+warnings.filterwarnings('ignore', module='google_adk.*')
+warnings.filterwarnings('ignore', module='google_genai.*')
+
+# Add root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from communication.message_bus import MessageBus

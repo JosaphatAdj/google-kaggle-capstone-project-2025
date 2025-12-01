@@ -17,6 +17,13 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Suppress Google ADK warnings
+import warnings
+warnings.filterwarnings('ignore', message='.*EXPERIMENTAL.*')
+warnings.filterwarnings('ignore', module='google_adk.*')
+warnings.filterwarnings('ignore', module='google_genai.*')
+warnings.filterwarnings('ignore', module='a2a.*')
+
 # Add root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -87,7 +94,7 @@ class RobotState:
         self.diagnostic_agent = create_diagnostic_loop_agent(self.retry_config)
         self.action_agent = create_action_agent(self.retry_config, self.hardware)
         
-        # ✅ NEW: Support Workflow (Sequential + Loop for auto-execution + re-escalation)
+        # Support Workflow (Sequential + Loop for auto-execution + re-escalation)
         from adk_agents.support_workflow_agent import create_support_workflow_agent
         self.support_workflow_agent = create_support_workflow_agent(
             robot_state=self,
@@ -133,13 +140,14 @@ class RobotState:
             instruction=f"""
 You are robot {self.robot_id} orchestrator.
 
-For any error: Delegate to support_workflow sub-agent. It will handle everything automatically:
-- Contact remote support via A2A
-- Execute solutions
-- Re-escalate if needed
-- Handle HITL
+ROUTING (SIMPLE):
 
-Just delegate and let it work.
+1. ERROR E01 → use action_agent sub-agent and execute action "clean_wheels", very important
+2. ALL OTHER ERRORS (E02-E09) → use support_workflow sub-agent,very important
+
+That's it. No formatting needed for support_workflow (it handles it automatically).
+
+Just delegate to the right sub-agent based on error code.
             """,
             tools=[
                 FunctionTool(self.get_robot_status)
@@ -172,6 +180,10 @@ Just delegate and let it work.
         """Execute structured solution received from A2A"""
         import json
         import re
+        
+        # DEBUG: Log raw input
+        logger.info(f"📥 RAW solution received (type={type(solution_data).__name__}):")
+        logger.info(f"📥 First 500 chars: {str(solution_data)[:500]}")
         
         try:
             # Parse solution (might be string or already dict)

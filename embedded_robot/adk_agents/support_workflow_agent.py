@@ -1,6 +1,5 @@
 """
-Support Workflow Agent
-Sequential agent that handles A2A escalation + automatic solution execution
+Support Workflow Agent 
 """
 
 from google.adk.agents import LlmAgent, SequentialAgent, LoopAgent
@@ -19,86 +18,130 @@ def create_support_workflow_agent(
     support_url: str = "http://localhost:8000"
 ):
     """
-    Create a workflow agent that:
-    1. Contacts remote support via A2A
-    2. Automatically executes the solution
-    3. Verifies result and re-escalates if needed (via Loop)
+    Minimal workflow - formatter in Sequential to avoid LLM hesitation
     """
     
+    # Suppress warnings
+    import warnings
+    warnings.filterwarnings('ignore', message='.*EXPERIMENTAL.*')
+    
     # ========================================
-    # STEP 1: Remote A2A Agent
+    # Message Formatter (FunctionTool)
     # ========================================
-    remote_support = RemoteA2aAgent(
+    def format_robot_alert() -> str:
+        """Auto-format alert with robot_id"""
+        current_error = robot_state.current_error
+        if not current_error:
+            return "No error"
+        
+        sensors = robot_state.hardware.get_sensor_readings()
+        error_name = current_error.name
+        
+        # Error descriptions
+        descriptions = {
+            "E01": "Wheels blocked", "E02": "Navigation error",
+            "E03": "Low battery", "E04": "Software error",
+            "E05": "Performance degraded", "E06": "Communication lost",
+            "E07": "Battery critical", "E08": "Firmware corruption",
+            "E09": "Safety sensor failure"
+        }
+        
+        message = (
+            f"Robot ID: {robot_state.robot_id}\n"
+            f"Error Code: {error_name}\n"
+            f"Description: {descriptions.get(error_name, error_name)}\n"
+            f"Battery: {int(sensors.get('battery_level', 0))}%\n"
+            f"Temperature: {sensors.get('temperature', 0.0):.1f}°C"
+        )
+        
+        logger.info(f"📤 Formatted: {robot_state.robot_id} - {error_name}")
+        return message
+    
+    # Formatter agent - just calls tool once
+    formatter_agent = LlmAgent(
+        model=Gemini(model="gemini-2.0-flash-lite", retry_config=retry_config),
+        name="formatter",
+        description="Formats alert",
+        instruction="Call format_robot_alert. Return ONLY the tool output.Nothing else.",
+        tools=[FunctionTool(format_robot_alert)]
+    )
+    
+    # ========================================
+    # A2A Communication with Alert Receiver
+    # ========================================
+    alert_receiver = RemoteA2aAgent(
         name="alert_receiver",
-        description="Remote support system via A2A",
+        description="Remote Alert Receiver for RoboNest support",
         agent_card=f"{support_url}{AGENT_CARD_WELL_KNOWN_PATH}"
     )
     
     # ========================================
-    # STEP 2: Solution Executor Agent
+    # Solution Executor
     # ========================================
     solution_executor = LlmAgent(
-        model=Gemini(model="gemini-2.0-flash-lite", retry_options=retry_config),
+        model=Gemini(model="gemini-2.0-flash-lite", retry_config=retry_config),
         name="solution_executor",
-        description="Automatically executes solutions from support",
-        instruction=f"""
-You receive a JSON solution from support.
+        description="Executes solution from support",
+        instruction="""
+IMMEDIATELY call execute_solution_structured with the solution you received.
 
-Your ONLY job: Call execute_solution_structured tool with that JSON.
+CRITICAL: Pass the EXACT input. Do NOT:
+- Add explanations
+- Modify JSON
+- Add quotes
+- Remove fields
+- Add text before/after
 
-DO NOT explain or plan. Just call the tool immediately.
+Just call: execute_solution_structured(<exact_input>)
         """,
-        tools=[
-            FunctionTool(robot_state.execute_solution_structured)
-        ]
+        tools=[FunctionTool(robot_state.execute_solution_structured)]
     )
     
     # ========================================
-    # Sequential: A2A → Execute
+    # Sequential: Format → Alert → Execute
     # ========================================
     escalation_sequence = SequentialAgent(
         name="escalation_sequence",
-        description="Sequential workflow: Contact support then execute solution",
+        description="Auto-format → Send → Execute",
         sub_agents=[
-            remote_support,      # Gets JSON from alert_receiver
-            solution_executor    # Executes that JSON
+            formatter_agent,     # 1. Auto-format with robot_id
+            alert_receiver,      # 2. Send via A2A
+            solution_executor    # 3. Execute
         ]
     )
     
     # ========================================
-    # STEP 3: Status Checker Agent
+    # Status Checker
     # ========================================
     status_checker = LlmAgent(
         model=Gemini(model="gemini-2.0-flash-lite", retry_config=retry_config),
         name="status_checker",
-        description="Checks robot status and decides if loop should continue",
-        instruction=f"""
-Check robot status using get_robot_status tool.
+        description="Checks if error resolved or HITL needed",
+        instruction="""
+Call get_robot_status tool.
 
-Loop should STOP if:
-1. State is OPERATIONAL (error resolved) → Say "STOP: Error resolved"
-2. Waiting HITL is True → Say "STOP: HITL intervention required"
+STOP loop if:
+1. State = OPERATIONAL → Say "STOP: Resolved"
+2. waiting_for_hitl = True → Say "STOP: HITL required"
 
-Otherwise say "CONTINUE: Error persists, re-escalating"
-    """,
-        tools=[
-            FunctionTool(robot_state.get_robot_status)
-        ]
+Otherwise: Say "CONTINUE"
+        """,
+        tools=[FunctionTool(robot_state.get_robot_status)]
     )
     
     # ========================================
-    # Loop: Repeat until resolved or HITL
+    # Loop: Until resolved or HITL
     # ========================================
     support_workflow = LoopAgent(
         name="support_workflow",
-        description="Loops A2A escalation → execution → verification until resolved or HITL",
+        description="Loop escalation until resolved or HITL",
         sub_agents=[
-            escalation_sequence,  # Step 1: Contact support + execute
-            status_checker        # Step 2: Check if should continue
+            escalation_sequence,  # Send + Execute
+            status_checker        # Check status
         ],
-        max_iterations=3
+        max_iterations=2  # Max 2 attempts
     )
     
-    logger.info(f"✅ Support Workflow Agent created (Sequential + Loop)")
+    logger.info(f"✅ Support Workflow Agent created (simplified)")
     
     return support_workflow

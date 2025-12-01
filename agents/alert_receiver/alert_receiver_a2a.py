@@ -212,48 +212,6 @@ async def process_robot_alert(
         return f"Failed to process alert: {str(e)}"
 
 
-def provide_solution(
-    robot_id: str,
-    error_code: str,
-    action: str,
-    ticket_id: str,
-    requires_hitl: bool = False,
-    details: Optional[Dict[str, Any]] = None
-) -> str:
-    """
-    Queue a solution for the robot to retrieve.
-    
-    Args:
-        robot_id: Robot identifier
-        error_code: Error code
-        action: Action to execute (clean_wheels, reboot, etc.)
-        ticket_id: Ticket ID
-        requires_hitl: Whether HITL is required
-        details: Additional details
-        
-    Returns:
-        Status message
-    """
-    logger.info(f"💡 Providing solution to {robot_id}: {action}")
-    
-    solution = {
-        "action": action,
-        "error_code": error_code,
-        "ticket_id": ticket_id,
-        "agent_id": "tech_support",
-        "details": details or {},
-        "requires_hitl": requires_hitl,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    
-    # Queue solution
-    alert_state.solution_queue[robot_id] = solution
-    alert_state.solutions_sent += 1
-    
-    logger.info(f"✅ Solution queued for {robot_id}")
-    
-    return f"Solution '{action}' queued for robot {robot_id}"
-
 
 def get_pending_solution(robot_id: str) -> str:
     """
@@ -263,14 +221,18 @@ def get_pending_solution(robot_id: str) -> str:
         robot_id: Robot identifier
         
     Returns:
-        Solution if available, otherwise message
+        JSON solution if available, otherwise error message
     """
+    import json
+    
     if robot_id in alert_state.solution_queue:
         solution = alert_state.solution_queue.pop(robot_id)
-        logger.info(f"📤 Sending solution to {robot_id}: {solution.get('action')}")
-        return f"Solution: {solution}"
+        logger.info(f"📤 Sending solution to {robot_id}: {solution.get('actions')}")
+        # Return CLEAN JSON (not f-string!)
+        return json.dumps(solution)
     else:
-        return f"No pending solution for {robot_id}"
+        # Return JSON error format
+        return json.dumps({"error": f"No pending solution for {robot_id}"})
 
 
 def get_alert_stats() -> str:
@@ -286,28 +248,54 @@ def create_alert_receiver_agent(retry_config: types.HttpRetryOptions) -> LlmAgen
     """Create Alert Receiver Agent with GoogleADK"""
     
     # Define JSON schema for response
-    from google.genai.types import GenerateContentConfig
+    from google.genai.types import GenerateContentConfig, Schema, Type
+    
+    # Strict JSON schema for response validation
+    response_schema = Schema(
+        type=Type.OBJECT,
+        properties={
+            "status": Schema(
+                type=Type.STRING,
+                description="Status of alert reception",
+                enum=["received", "error"]
+            ),
+            "task_id": Schema(
+                type=Type.STRING,
+                description="Unique task identifier"
+            ),
+            "message": Schema(
+                type=Type.STRING,
+                description="Human-readable message"
+            )
+        },
+        required=["status", "task_id", "message"]
+    )
     
     agent = LlmAgent(
         model=Gemini(
             model="gemini-2.0-flash-lite", 
             retry_options=retry_config,
             generation_config=GenerateContentConfig(
-                response_mime_type="application/json"
+                response_mime_type="application/json",
+                response_schema=response_schema  # ← STRICT SCHEMA
             )
         ),
         name="alert_receiver",
-        description="Alert Receiver Agent that processes robot alerts and provides solutions via A2A protocol",
+        description="Alert Receiver Agent that processes robot alerts and routes to support",
         instruction="""
-You are the Alert Receiver Agent for the RoboNest system.
+You are the Alert Receiver Agent for RoboNest.
 
-When robot sends alert, extract robot_id from message:
-- Look for: "Robot XR25-001", "robot_id: XR25-001"  
+Your ONLY job: ROUTE alerts to support, NOT generate solutions.
 
-Then:
-1. query_error_code - Get error info from RAG
-2. classify_error - Determine urgency
-3. process_robot_alert - Forward to COO (use extracted robot_id)
+When robot sends alert:
+1. Extract robot_id from message
+2. query_error_code - Get RAG info  
+3. classify_error - Determine urgency
+4. process_robot_alert - Forward to COO (CRITICAL!)
+
+DO NOT call provide_solution. Solutions come from backend.
+
+When robot calls get_pending_solution, just call the tool.
 
 Return JSON:
 {
@@ -319,9 +307,9 @@ Return JSON:
         tools=[
             FunctionTool(query_error_code),
             FunctionTool(classify_error),
-            FunctionTool(process_robot_alert),
-            FunctionTool(provide_solution),
-            FunctionTool(get_pending_solution),
+            FunctionTool(process_robot_alert),  # Route to backend
+            # NO provide_solution - backend generates solutions!
+            FunctionTool(get_pending_solution),  # Fetch only
             FunctionTool(get_alert_stats)
         ]
     )

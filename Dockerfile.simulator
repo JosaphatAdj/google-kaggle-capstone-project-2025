@@ -1,0 +1,29 @@
+# ============================================================
+# ROBONEST ERROR SIMULATOR - DOCKERFILE
+# Interactive testing console
+# ============================================================
+
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements (minimal for simulator)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy simulator code
+COPY start_simulator.py .
+
+# Expose port (optional, for web interface)
+EXPOSE 8002
+
+# Run simulator in interactive mode
+CMD ["python", "-u", "start_simulator.py"]

@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # SUPPORT SYSTEM (Alert Receiver + COO + Tech Support)
+  # ============================================================
+  support-system:
+    build:
+      context: .
+      dockerfile: Dockerfile.support
+    container_name: robonest-support
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - JIRA_URL=${JIRA_URL:-}
+      - JIRA_EMAIL=${JIRA_EMAIL:-}
+      - JIRA_API_TOKEN=${JIRA_API_TOKEN:-}
+      - GMAIL_CREDENTIALS_PATH=${GMAIL_CREDENTIALS_PATH:-}
+      - SUPPORT_EMAIL=${SUPPORT_EMAIL:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./rag/chroma_db:/app/rag/chroma_db:ro  # Read-only ChromaDB
+      - ./logs:/app/logs
+    networks:
+      - robonest-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/.well-known/agent-card.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # ============================================================
+  # EMBEDDED ROBOT
+  # ============================================================
+  robot:
+    build:
+      context: .
+      dockerfile: Dockerfile.robot
+    container_name: robonest-robot
+    ports:
+      - "8001:8001"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SUPPORT_URL=http://support-system:8000
+      - ROBOT_ID=${ROBOT_ID:-XR25-001}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    networks:
+      - robonest-network
+    depends_on:
+      support-system:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # ERROR SIMULATOR (Optional - for testing)
+  # ============================================================
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    container_name: robonest-simulator
+    ports:
+      - "8002:8002"
+    environment:
+      - ROBOT_URL=http://robot:8001
+      - PYTHONUNBUFFERED=1
+    networks:
+      - robonest-network
+    depends_on:
+      - robot
+    profiles:
+      - testing  # Only run with: docker-compose --profile testing up
+    stdin_open: true
+    tty: true
+
+networks:
+  robonest-network:
+    driver: bridge
+    name: robonest-net
+
+volumes:
+  logs:
+    driver: local
